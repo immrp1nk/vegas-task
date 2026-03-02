@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Vegas 출장">
+  <title>🎰 Vegas 출장 일정</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --meeting:      #3B82F6;
+      --meeting-bg:   #EFF6FF;
+      --dining:       #F97316;
+      --dining-bg:    #FFF7ED;
+      --transport:    #10B981;
+      --transport-bg: #ECFDF5;
+      --leisure:      #8B5CF6;
+      --leisure-bg:   #F5F3FF;
+      --bg:           #F1F5F9;
+      --card:         #FFFFFF;
+      --text:         #1E293B;
+      --muted:        #94A3B8;
+      --border:       #E2E8F0;
+      --dark:         #0F172A;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 90px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────── */
+    .header {
+      background: linear-gradient(160deg, #0F172A 0%, #1E3A5F 100%);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.3);
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px 10px;
+    }
+
+    .header-title { font-size: 19px; font-weight: 800; color: #fff; letter-spacing: -0.4px; }
+    .header-sub   { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+
+    /* Day Tabs */
+    .day-tabs {
+      display: flex;
+      overflow-x: auto;
+      padding: 0 10px 10px;
+      gap: 4px;
+      scrollbar-width: none;
+    }
+    .day-tabs::-webkit-scrollbar { display: none; }
+
+    .day-tab {
+      flex-shrink: 0;
+      padding: 7px 13px;
+      border-radius: 22px;
+      cursor: pointer;
+      color: rgba(255,255,255,0.45);
+      font-size: 11px;
+      font-weight: 600;
+      text-align: center;
+      transition: all 0.18s;
+      line-height: 1.3;
+      border: 1.5px solid transparent;
+    }
+    .day-tab .dn { display: block; font-size: 16px; font-weight: 800; color: rgba(255,255,255,0.55); }
+    .day-tab.active { background: #fff; color: var(--dark); border-color: #fff; }
+    .day-tab.active .dn { color: var(--dark); }
+    .day-tab.today .dn::after {
+      content: '';
+      display: block;
+      width: 5px; height: 5px;
+      background: #F97316;
+      border-radius: 50%;
+      margin: 2px auto 0;
+    }
+
+    /* ── Stats Bar ──────────────────────────────────────────────── */
+    .stats-bar {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 11px 16px 12px;
+    }
+
+    .stats-top {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 9px;
+    }
+    .stats-top strong { color: var(--text); font-size: 14px; }
+
+    .stats-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 11px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .chip.meeting   { background: var(--meeting-bg);   color: var(--meeting); }
+    .chip.dining    { background: var(--dining-bg);    color: var(--dining); }
+    .chip.transport { background: var(--transport-bg); color: var(--transport); }
+    .chip.leisure   { background: var(--leisure-bg);   color: var(--leisure); }
+    .chip.on        { border-color: currentColor; }
+    .chip.dim       { opacity: 0.35; }
+
+    /* ── Events ─────────────────────────────────────────────────── */
+    .events { padding: 14px 14px 0; }
+
+    .empty {
+      text-align: center;
+      padding: 64px 20px;
+      color: var(--muted);
+    }
+    .empty-icon { font-size: 52px; }
+    .empty-label { font-size: 15px; font-weight: 600; color: #64748B; margin-top: 10px; }
+    .empty-hint  { font-size: 13px; margin-top: 5px; }
+
+    .event-card {
+      background: var(--card);
+      border-radius: 16px;
+      margin-bottom: 10px;
+      padding: 14px 15px;
+      display: flex;
+      gap: 12px;
+      cursor: pointer;
+      border-left: 4px solid transparent;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.07);
+      transition: transform 0.1s, box-shadow 0.1s;
+      -webkit-user-select: none;
+    }
+    .event-card:active  { transform: scale(0.975); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .event-card.meeting   { border-left-color: var(--meeting); }
+    .event-card.dining    { border-left-color: var(--dining); }
+    .event-card.transport { border-left-color: var(--transport); }
+    .event-card.leisure   { border-left-color: var(--leisure); }
+
+    .ev-time {
+      flex-shrink: 0;
+      width: 50px;
+      text-align: right;
+      padding-top: 2px;
+    }
+    .ev-start { font-size: 13px; font-weight: 700; }
+    .ev-end   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .ev-dot-col {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 5px;
+    }
+    .ev-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+    }
+    .meeting   .ev-dot { background: var(--meeting); }
+    .dining    .ev-dot { background: var(--dining); }
+    .transport .ev-dot { background: var(--transport); }
+    .leisure   .ev-dot { background: var(--leisure); }
+
+    .ev-body  { flex: 1; min-width: 0; }
+    .ev-badge { font-size: 11px; font-weight: 700; margin-bottom: 3px; }
+    .meeting   .ev-badge { color: var(--meeting); }
+    .dining    .ev-badge { color: var(--dining); }
+    .transport .ev-badge { color: var(--transport); }
+    .leisure   .ev-badge { color: var(--leisure); }
+
+    .ev-title {
+      font-size: 15px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+    .ev-place {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: flex-start;
+      gap: 3px;
+    }
+    .ev-memo {
+      font-size: 12px;
+      color: #64748B;
+      margin-top: 4px;
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* ── FAB ────────────────────────────────────────────────────── */
+    .fab {
+      position: fixed;
+      bottom: 26px;
+      right: 20px;
+      width: 60px; height: 60px;
+      border-radius: 30px;
+      background: linear-gradient(135deg, #1E3A5F, #0F172A);
+      color: #fff;
+      font-size: 30px;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 24px rgba(15,23,42,0.45);
+      cursor: pointer;
+      z-index: 200;
+      transition: transform 0.15s;
+    }
+    .fab:active { transform: scale(0.88); }
+
+    /* ── Modal ──────────────────────────────────────────────────── */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 300;
+      display: none;
+      align-items: flex-end;
+      backdrop-filter: blur(2px);
+    }
+    .overlay.open { display: flex; }
+
+    .sheet {
+      background: var(--card);
+      border-radius: 24px 24px 0 0;
+      width: 100%;
+      max-height: 92vh;
+      overflow-y: auto;
+      padding-bottom: max(34px, env(safe-area-inset-bottom));
+      animation: slideUp 0.25s cubic-bezier(0.32,0.72,0,1);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+
+    .sheet-handle {
+      width: 38px; height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 12px auto 0;
+    }
+
+    .sheet-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sheet-title { font-size: 17px; font-weight: 800; }
+    .sheet-close {
+      background: var(--bg);
+      border: none;
+      width: 30px; height: 30px;
+      border-radius: 15px;
+      font-size: 16px;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sheet-body { padding: 18px 18px 0; }
+
+    .fg { margin-bottom: 15px; }
+    .fl {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 7px;
+    }
+
+    .fi {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-size: 15px;
+      font-family: inherit;
+      background: #fff;
+      outline: none;
+      transition: border-color 0.18s;
+      -webkit-appearance: none;
+    }
+    .fi:focus { border-color: #1E3A5F; }
+    .fi.err   { border-color: #EF4444; }
+    textarea.fi { resize: none; height: 76px; }
+
+    .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* Category buttons */
+    .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .cat-btn {
+      padding: 11px 8px;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      background: var(--card);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+      font-family: inherit;
+      color: var(--text);
+    }
+    .cat-btn.sel.meeting   { background: var(--meeting-bg);   border-color: var(--meeting);   color: var(--meeting); }
+    .cat-btn.sel.dining    { background: var(--dining-bg);    border-color: var(--dining);    color: var(--dining); }
+    .cat-btn.sel.transport { background: var(--transport-bg); border-color: var(--transport); color: var(--transport); }
+    .cat-btn.sel.leisure   { background: var(--leisure-bg);   border-color: var(--leisure);   color: var(--leisure); }
+
+    /* Buttons */
+    .btn-save {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #1E3A5F, #0F172A);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 8px;
+      transition: opacity 0.15s;
+    }
+    .btn-save:active { opacity: 0.8; }
+
+    .btn-del {
+      display: none;
+      width: 100%;
+      padding: 14px;
+      background: none;
+      border: 1.5px solid #FCA5A5;
+      border-radius: 14px;
+      color: #EF4444;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 10px;
+      margin-bottom: 4px;
+      transition: background 0.15s;
+    }
+    .btn-del:active { background: #FEF2F2; }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ────────────────────────────────────────────────────── -->
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="header-title">🎰 Vegas 출장 일정</div>
+      <div class="header-sub">Mar 2 – Mar 8, 2026</div>
+    </div>
+  </div>
+  <div class="day-tabs" id="dayTabs"></div>
+</div>
+
+<!-- ── Stats ─────────────────────────────────────────────────────── -->
+<div class="stats-bar">
+  <div class="stats-top">전체 <strong id="totalCount">0</strong>개 일정</div>
+  <div class="stats-chips" id="statsChips"></div>
+</div>
+
+<!-- ── Events ────────────────────────────────────────────────────── -->
+<div class="events" id="eventsContainer"></div>
+
+<!-- ── FAB ───────────────────────────────────────────────────────── -->
+<button class="fab" onclick="openSheet()">+</button>
+
+<!-- ── Sheet Modal ────────────────────────────────────────────────── -->
+<div class="overlay" id="overlay" onclick="onOverlayClick(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <div class="sheet-title" id="sheetTitle">일정 추가</div>
+      <button class="sheet-close" onclick="closeSheet()">✕</button>
+    </div>
+    <div class="sheet-body">
+      <input type="hidden" id="editId">
+
+      <div class="fg">
+        <span class="fl">카테고리</span>
+        <div class="cat-grid">
+          <button class="cat-btn meeting"   onclick="pickCat('meeting')">🤝 미팅</button>
+          <button class="cat-btn dining"    onclick="pickCat('dining')">🍽️ 식사/네트워킹</button>
+          <button class="cat-btn transport" onclick="pickCat('transport')">✈️ 이동/교통</button>
+          <button class="cat-btn leisure"   onclick="pickCat('leisure')">🎰 여가</button>
+        </div>
+      </div>
+
+      <div class="fg">
+        <label class="fl" for="iTitle">제목 *</label>
+        <input class="fi" type="text" id="iTitle" placeholder="일정 제목을 입력하세요">
+      </div>
+
+      <div class="fg">
+        <label class="fl" for="iDate">날짜</label>
+        <select class="fi" id="iDate"></select>
+      </div>
+
+      <div class="fg">
+        <span class="fl">시간</span>
+        <div class="time-row">
+          <input class="fi" type="time" id="iStart">
+          <input class="fi" type="time" id="iEnd">
+        </div>
+      </div>
+
+      <div class="fg">
+        <label class="fl" for="iPlace">장소</label>
+        <input class="fi" type="text" id="iPlace" placeholder="장소 또는 주소">
+      </div>
+
+      <div class="fg">
+        <label class="fl" for="iMemo">메모</label>
+        <textarea class="fi" id="iMemo" placeholder="추가 정보나 메모"></textarea>
+      </div>
+
+      <button class="btn-save" onclick="saveEvent()">저장</button>
+      <button class="btn-del" id="btnDel" onclick="deleteEvent()">🗑 이 일정 삭제</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Constants ────────────────────────────────────────────────────
+  const DAYS = [
+    { date:'2026-03-02', label:'3/2',  day:'월' },
+    { date:'2026-03-03', label:'3/3',  day:'화' },
+    { date:'2026-03-04', label:'3/4',  day:'수' },
+    { date:'2026-03-05', label:'3/5',  day:'목' },
+    { date:'2026-03-06', label:'3/6',  day:'금' },
+    { date:'2026-03-07', label:'3/7',  day:'토' },
+    { date:'2026-03-08', label:'3/8',  day:'일' },
+  ];
+
+  const CATS = {
+    meeting:   { icon:'🤝', label:'미팅' },
+    dining:    { icon:'🍽️', label:'식사/네트워킹' },
+    transport: { icon:'✈️', label:'이동/교통' },
+    leisure:   { icon:'🎰', label:'여가' },
+  };
+
+  const KEY = 'vegas26';
+
+  // ── State ─────────────────────────────────────────────────────────
+  let activeDate  = DAYS[0].date;
+  let filters     = new Set();   // empty = show all
+  let selCat      = 'meeting';
+  let editingId   = null;
+
+  // ── Storage ───────────────────────────────────────────────────────
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY) || '{}'); }
+    catch { return {}; }
+  }
+  function save(data) { localStorage.setItem(KEY, JSON.stringify(data)); }
+
+  function eventsOn(date) {
+    return (load()[date] || []).slice().sort((a,b) => (a.start||'').localeCompare(b.start||''));
+  }
+  function allEvents() { return Object.values(load()).flat(); }
+
+  // ── Render ────────────────────────────────────────────────────────
+  function render() {
+    renderTabs();
+    renderStats();
+    renderEvents();
+  }
+
+  function renderTabs() {
+    const today = new Date().toISOString().slice(0,10);
+    document.getElementById('dayTabs').innerHTML = DAYS.map(d => `
+      <div class="day-tab${d.date===activeDate?' active':''}${d.date===today?' today':''}"
+           onclick="switchDay('${d.date}')">
+        <span class="dn">${d.label}</span>${d.day}
+      </div>`).join('');
+  }
+
+  function renderStats() {
+    const all = allEvents();
+    const counts = { meeting:0, dining:0, transport:0, leisure:0 };
+    all.forEach(e => { if (e.cat in counts) counts[e.cat]++; });
+    document.getElementById('totalCount').textContent = all.length;
+
+    document.getElementById('statsChips').innerHTML = Object.entries(CATS).map(([k,c]) => {
+      const on  = filters.has(k);
+      const dim = filters.size > 0 && !on;
+      return `<div class="chip ${k}${on?' on':''}${dim?' dim':''}" onclick="toggleFilter('${k}')">
+        ${c.icon} ${c.label} <strong>${counts[k]}</strong>
+      </div>`;
+    }).join('');
+  }
+
+  function renderEvents() {
+    const list = eventsOn(activeDate);
+    const shown = filters.size ? list.filter(e => filters.has(e.cat)) : list;
+    const el = document.getElementById('eventsContainer');
+
+    if (!shown.length) {
+      el.innerHTML = `<div class="empty">
+        <div class="empty-icon">📅</div>
+        <div class="empty-label">일정이 없습니다</div>
+        <div class="empty-hint">+ 버튼으로 새 일정을 추가하세요</div>
+      </div>`;
+      return;
+    }
+
+    el.innerHTML = shown.map(e => `
+      <div class="event-card ${e.cat}" onclick="openSheet('${e.id}')">
+        <div class="ev-time">
+          <div class="ev-start">${e.start||'--:--'}</div>
+          ${e.end ? `<div class="ev-end">${e.end}</div>` : ''}
+        </div>
+        <div class="ev-dot-col"><div class="ev-dot"></div></div>
+        <div class="ev-body">
+          <div class="ev-badge">${CATS[e.cat].icon} ${CATS[e.cat].label}</div>
+          <div class="ev-title">${esc(e.title)}</div>
+          ${e.place ? `<div class="ev-place">📍 ${esc(e.place)}</div>` : ''}
+          ${e.memo  ? `<div class="ev-memo">${esc(e.memo)}</div>` : ''}
+        </div>
+      </div>`).join('');
+  }
+
+  // ── Interactions ──────────────────────────────────────────────────
+  function switchDay(date) { activeDate = date; render(); }
+
+  function toggleFilter(cat) {
+    filters.has(cat) ? filters.delete(cat) : filters.add(cat);
+    render();
+  }
+
+  // ── Sheet ─────────────────────────────────────────────────────────
+  function openSheet(id = null) {
+    editingId = id;
+
+    // Populate date select
+    const sel = document.getElementById('iDate');
+    sel.innerHTML = DAYS.map(d =>
+      `<option value="${d.date}"${d.date===activeDate?' selected':''}>${d.label}(${d.day})</option>`
+    ).join('');
+
+    if (id) {
+      const data = load();
+      let ev = null, evDate = null;
+      for (const [d, arr] of Object.entries(data)) {
+        ev = arr.find(e => e.id === id);
+        if (ev) { evDate = d; break; }
+      }
+      if (!ev) return;
+
+      document.getElementById('sheetTitle').textContent = '일정 수정';
+      sel.value = evDate;
+      document.getElementById('iTitle').value = ev.title  || '';
+      document.getElementById('iStart').value = ev.start  || '';
+      document.getElementById('iEnd').value   = ev.end    || '';
+      document.getElementById('iPlace').value = ev.place  || '';
+      document.getElementById('iMemo').value  = ev.memo   || '';
+      document.getElementById('btnDel').style.display = 'block';
+      pickCat(ev.cat || 'meeting');
+    } else {
+      document.getElementById('sheetTitle').textContent = '일정 추가';
+      ['iTitle','iStart','iEnd','iPlace','iMemo'].forEach(i => document.getElementById(i).value = '');
+      document.getElementById('iTitle').classList.remove('err');
+      document.getElementById('btnDel').style.display = 'none';
+      pickCat('meeting');
+    }
+
+    document.getElementById('overlay').classList.add('open');
+  }
+
+  function closeSheet() {
+    document.getElementById('overlay').classList.remove('open');
+    editingId = null;
+  }
+
+  function onOverlayClick(e) { if (e.target === e.currentTarget) closeSheet(); }
+
+  function pickCat(cat) {
+    selCat = cat;
+    document.querySelectorAll('.cat-btn').forEach(b => {
+      b.classList.remove('sel');
+      if (b.classList.contains(cat)) b.classList.add('sel');
+    });
+  }
+
+  // ── CRUD ──────────────────────────────────────────────────────────
+  function saveEvent() {
+    const title = document.getElementById('iTitle').value.trim();
+    const titleEl = document.getElementById('iTitle');
+    if (!title) { titleEl.classList.add('err'); titleEl.focus(); return; }
+    titleEl.classList.remove('err');
+
+    const date = document.getElementById('iDate').value;
+    const ev = {
+      id:    editingId || uid(),
+      cat:   selCat,
+      title,
+      start: document.getElementById('iStart').value,
+      end:   document.getElementById('iEnd').value,
+      place: document.getElementById('iPlace').value.trim(),
+      memo:  document.getElementById('iMemo').value.trim(),
+    };
+
+    const data = load();
+    if (editingId) {
+      Object.keys(data).forEach(d => {
+        data[d] = data[d].filter(e => e.id !== editingId);
+      });
+    }
+    if (!data[date]) data[date] = [];
+    data[date].push(ev);
+    save(data);
+
+    closeSheet();
+    activeDate = date;
+    render();
+  }
+
+  function deleteEvent() {
+    if (!editingId || !confirm('이 일정을 삭제할까요?')) return;
+    const data = load();
+    Object.keys(data).forEach(d => {
+      data[d] = data[d].filter(e => e.id !== editingId);
+    });
+    save(data);
+    closeSheet();
+    render();
+  }
+
+  // ── Utils ─────────────────────────────────────────────────────────
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+  function esc(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────
+  render();
+</script>
+</body>
+</html>
