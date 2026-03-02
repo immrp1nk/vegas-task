@@ -37,7 +37,7 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding-bottom: 90px;
+      padding-bottom: 74px;
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -221,7 +221,7 @@
 
     /* ── FAB ────────────────────────────────────────────────────── */
     .fab {
-      position: fixed; bottom: 26px; right: 20px;
+      position: fixed; bottom: 72px; right: 20px;
       width: 60px; height: 60px; border-radius: 30px;
       background: linear-gradient(135deg, #1E3A5F, #0F172A);
       color: #fff; font-size: 30px; border: none;
@@ -321,6 +321,72 @@
       transition: background 0.15s;
     }
     .btn-del:active { background: #FEF2F2; }
+
+    /* ── Bottom Navigation ───────────────────────────────────────── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 150;
+      height: 60px;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      display: flex;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .nav-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 2px;
+      border: none; background: none; cursor: pointer;
+      color: var(--muted); font-family: inherit;
+      transition: color 0.15s; -webkit-tap-highlight-color: transparent;
+    }
+    .nav-btn.active { color: #1E3A5F; }
+    .nav-icon  { font-size: 22px; line-height: 1; }
+    .nav-label { font-size: 10px; font-weight: 700; }
+
+    /* ── Contacts ────────────────────────────────────────────────── */
+    .contacts-list { padding: 14px; }
+
+    .contact-group-header {
+      font-size: 11px; font-weight: 800; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.6px;
+      padding: 14px 4px 8px;
+    }
+    .contact-group-header:first-child { padding-top: 6px; }
+
+    .contact-card {
+      background: var(--card); border-radius: 14px;
+      margin-bottom: 8px; padding: 13px 14px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.07); cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .contact-card:active { transform: scale(0.975); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+
+    .contact-info { flex: 1; min-width: 0; }
+    .contact-name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .contact-role { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .contact-note { font-size: 11px; color: #64748B; margin-top: 3px; }
+
+    .call-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      background: linear-gradient(135deg, #10B981, #059669);
+      color: #fff; text-decoration: none;
+      padding: 10px 13px; border-radius: 12px;
+      flex-shrink: 0; min-width: 70px; text-align: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .call-btn:active { opacity: 0.8; }
+    .call-icon { font-size: 18px; line-height: 1; }
+    .call-num  { font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    /* Contact group buttons */
+    .cg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .cg-btn {
+      padding: 10px 8px; border-radius: 12px; border: 2px solid var(--border);
+      background: var(--card); font-size: 13px; font-weight: 600;
+      cursor: pointer; text-align: center; transition: all 0.15s;
+      font-family: inherit; color: var(--text);
+    }
+    .cg-btn.sel { background: #EFF6FF; border-color: var(--meeting); color: var(--meeting); }
   </style>
 </head>
 <body>
@@ -342,19 +408,30 @@
   <div class="weather-bar" id="weatherBar"></div>
 </div>
 
-<!-- ── Stats ─────────────────────────────────────────────────────── -->
-<div class="stats-bar">
-  <div class="stats-top">전체 <strong id="totalCount">0</strong>개 일정</div>
-  <div class="stats-chips" id="statsChips"></div>
+<!-- ── Schedule View ─────────────────────────────────────────────── -->
+<div id="scheduleView">
+  <!-- ── Stats ───────────────────────────────────────────────────── -->
+  <div class="stats-bar">
+    <div class="stats-top">전체 <strong id="totalCount">0</strong>개 일정</div>
+    <div class="stats-chips" id="statsChips"></div>
+  </div>
+
+  <!-- ── Events ──────────────────────────────────────────────────── -->
+  <div class="events" id="eventsContainer"></div>
 </div>
 
-<!-- ── Events ────────────────────────────────────────────────────── -->
-<div class="events" id="eventsContainer"></div>
+<!-- ── Contacts View ─────────────────────────────────────────────── -->
+<div id="contactsView" style="display:none">
+  <div class="contacts-list" id="contactsContainer"></div>
+</div>
 
-<!-- ── FAB ───────────────────────────────────────────────────────── -->
-<button class="fab" onclick="openSheet()">+</button>
+<!-- ── FAB: 일정 추가 ─────────────────────────────────────────────── -->
+<button class="fab" id="fabAdd" onclick="openSheet()">+</button>
 
-<!-- ── Sheet Modal ────────────────────────────────────────────────── -->
+<!-- ── FAB: 연락처 추가 ──────────────────────────────────────────── -->
+<button class="fab" id="fabContact" style="display:none" onclick="openContactSheet()">+</button>
+
+<!-- ── Sheet Modal (일정) ─────────────────────────────────────────── -->
 <div class="overlay" id="overlay" onclick="onOverlayClick(event)">
   <div class="sheet">
     <div class="sheet-handle"></div>
@@ -439,6 +516,69 @@
     </div>
   </div>
 </div>
+
+<!-- ── Contact Modal (연락처 추가/수정) ──────────────────────────── -->
+<div class="overlay" id="contactOverlay" onclick="onContactOverlayClick(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <div class="sheet-title" id="contactSheetTitle">연락처 추가</div>
+      <button class="sheet-close" onclick="closeContactSheet()">✕</button>
+    </div>
+    <div class="sheet-body">
+
+      <!-- Group -->
+      <div class="fg">
+        <span class="fl">분류</span>
+        <div class="cg-grid">
+          <button class="cg-btn" data-group="hotel"     onclick="pickContactGroup('hotel')">🏨 숙소</button>
+          <button class="cg-btn" data-group="transport" onclick="pickContactGroup('transport')">✈️ 교통</button>
+          <button class="cg-btn" data-group="business"  onclick="pickContactGroup('business')">🤝 비즈니스</button>
+          <button class="cg-btn" data-group="emergency" onclick="pickContactGroup('emergency')">🚨 긴급</button>
+        </div>
+      </div>
+
+      <!-- Name -->
+      <div class="fg">
+        <label class="fl" for="iContactName">이름 *</label>
+        <input class="fi" type="text" id="iContactName" placeholder="연락처 이름">
+      </div>
+
+      <!-- Role -->
+      <div class="fg">
+        <label class="fl" for="iContactRole">직책/설명</label>
+        <input class="fi" type="text" id="iContactRole" placeholder="담당자, 부서 등">
+      </div>
+
+      <!-- Phone -->
+      <div class="fg">
+        <label class="fl" for="iContactPhone">전화번호 *</label>
+        <input class="fi" type="tel" id="iContactPhone" placeholder="+1-702-000-0000">
+      </div>
+
+      <!-- Note -->
+      <div class="fg">
+        <label class="fl" for="iContactNote">메모</label>
+        <input class="fi" type="text" id="iContactNote" placeholder="추가 정보">
+      </div>
+
+      <button class="btn-save" onclick="saveContact()">저장</button>
+      <button class="btn-del" id="btnDelContact" onclick="deleteContact()">🗑 이 연락처 삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Bottom Navigation ─────────────────────────────────────────── -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-tab="schedule" onclick="switchTab('schedule')">
+    <span class="nav-icon">📅</span>
+    <span class="nav-label">일정</span>
+  </button>
+  <button class="nav-btn" data-tab="contacts" onclick="switchTab('contacts')">
+    <span class="nav-icon">📞</span>
+    <span class="nav-label">연락처</span>
+  </button>
+</nav>
 
 <script>
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -884,6 +1024,182 @@
     if (!firebaseReady) render();
   }
 
+  // ── Contacts ─────────────────────────────────────────────────────
+  const CONTACTS_KEY = 'vegas26_contacts';
+
+  const CONTACT_GROUPS = {
+    hotel:     {icon:'🏨', label:'숙소'},
+    transport: {icon:'✈️', label:'교통'},
+    business:  {icon:'🤝', label:'비즈니스'},
+    emergency: {icon:'🚨', label:'긴급'},
+  };
+
+  const DEFAULT_CONTACTS = [
+    {id:'c1', name:'MGM Grand Hotel',        role:'프론트 데스크',   phone:'+1-702-891-1111', group:'hotel',     note:''},
+    {id:'c2', name:'Bellagio Hotel',          role:'프론트 데스크',   phone:'+1-702-693-7111', group:'hotel',     note:''},
+    {id:'c3', name:'Las Vegas Airport (LAS)', role:'공항 안내',       phone:'+1-702-261-5211', group:'transport', note:''},
+    {id:'c4', name:'Yellow Cab Las Vegas',    role:'택시 예약',       phone:'+1-702-873-2000', group:'transport', note:''},
+    {id:'c5', name:'Uber (앱으로 호출)',       role:'차량 공유',       phone:'',                group:'transport', note:'앱에서 예약'},
+    {id:'c6', name:'미국 긴급 구조',           role:'경찰/소방/구급',  phone:'911',             group:'emergency', note:''},
+    {id:'c7', name:'한국 영사관 (LA)',         role:'영사 서비스',     phone:'+1-213-385-9300', group:'emergency', note:'24시간 긴급전화'},
+  ];
+
+  let contacts        = [];
+  let activeTab       = 'schedule';
+  let editingContactId = null;
+  let selContactGroup  = 'business';
+
+  function loadContacts() {
+    try {
+      const raw = localStorage.getItem(CONTACTS_KEY);
+      contacts  = raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(DEFAULT_CONTACTS));
+    } catch {
+      contacts = JSON.parse(JSON.stringify(DEFAULT_CONTACTS));
+    }
+  }
+
+  function saveContacts() {
+    localStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts));
+  }
+
+  function switchTab(tab) {
+    activeTab = tab;
+    const isSched = tab === 'schedule';
+    document.getElementById('scheduleView').style.display  = isSched ? '' : 'none';
+    document.getElementById('contactsView').style.display  = isSched ? 'none' : '';
+    document.getElementById('fabAdd').style.display        = isSched ? 'flex' : 'none';
+    document.getElementById('fabContact').style.display    = isSched ? 'none' : 'flex';
+    document.querySelectorAll('.nav-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.tab === tab)
+    );
+    if (tab === 'contacts') renderContacts();
+  }
+
+  function renderContacts() {
+    const el      = document.getElementById('contactsContainer');
+    const grouped = {};
+    Object.keys(CONTACT_GROUPS).forEach(k => grouped[k] = []);
+    contacts.forEach(c => { if (grouped[c.group]) grouped[c.group].push(c); });
+
+    let html   = '';
+    let hasAny = false;
+
+    Object.entries(CONTACT_GROUPS).forEach(([key, grp]) => {
+      const list = grouped[key];
+      if (!list.length) return;
+      hasAny = true;
+      html += `<div class="contact-group-header">${grp.icon} ${grp.label}</div>`;
+      list.forEach(c => {
+        const tel = c.phone.replace(/[^+\d]/g, '');
+        const callPart = tel
+          ? `<a class="call-btn" href="tel:${tel}" onclick="event.stopPropagation()">
+               <span class="call-icon">📞</span>
+               <span class="call-num">${esc(c.phone)}</span>
+             </a>`
+          : `<div class="call-btn" style="background:#94A3B8;opacity:0.6">
+               <span class="call-icon">📞</span>
+               <span class="call-num">앱 사용</span>
+             </div>`;
+        html += `<div class="contact-card" onclick="openContactSheet('${c.id}')">
+          <div class="contact-info">
+            <div class="contact-name">${esc(c.name)}</div>
+            ${c.role ? `<div class="contact-role">${esc(c.role)}</div>` : ''}
+            ${c.note ? `<div class="contact-note">${esc(c.note)}</div>` : ''}
+          </div>
+          ${callPart}
+        </div>`;
+      });
+    });
+
+    if (!hasAny) {
+      html = `<div class="empty">
+        <div class="empty-icon">📞</div>
+        <div class="empty-label">저장된 연락처가 없습니다</div>
+        <div class="empty-hint">+ 버튼으로 연락처를 추가하세요</div>
+      </div>`;
+    }
+
+    el.innerHTML = html;
+  }
+
+  function openContactSheet(id = null) {
+    editingContactId = id;
+    if (id) {
+      const c = contacts.find(x => x.id === id);
+      if (!c) return;
+      document.getElementById('contactSheetTitle').textContent = '연락처 수정';
+      document.getElementById('iContactName').value  = c.name  || '';
+      document.getElementById('iContactRole').value  = c.role  || '';
+      document.getElementById('iContactPhone').value = c.phone || '';
+      document.getElementById('iContactNote').value  = c.note  || '';
+      document.getElementById('btnDelContact').style.display = 'block';
+      pickContactGroup(c.group || 'business');
+    } else {
+      document.getElementById('contactSheetTitle').textContent = '연락처 추가';
+      ['iContactName','iContactRole','iContactPhone','iContactNote'].forEach(i =>
+        document.getElementById(i).value = ''
+      );
+      document.getElementById('iContactName').classList.remove('err');
+      document.getElementById('iContactPhone').classList.remove('err');
+      document.getElementById('btnDelContact').style.display = 'none';
+      pickContactGroup('business');
+    }
+    document.getElementById('contactOverlay').classList.add('open');
+  }
+
+  function closeContactSheet() {
+    document.getElementById('contactOverlay').classList.remove('open');
+    editingContactId = null;
+  }
+
+  function onContactOverlayClick(e) { if (e.target === e.currentTarget) closeContactSheet(); }
+
+  function pickContactGroup(grp) {
+    selContactGroup = grp;
+    document.querySelectorAll('.cg-btn').forEach(b =>
+      b.classList.toggle('sel', b.dataset.group === grp)
+    );
+  }
+
+  function saveContact() {
+    const nameEl  = document.getElementById('iContactName');
+    const phoneEl = document.getElementById('iContactPhone');
+    const name    = nameEl.value.trim();
+    const phone   = phoneEl.value.trim();
+
+    if (!name)  { nameEl.classList.add('err');  nameEl.focus();  return; }
+    nameEl.classList.remove('err');
+    phoneEl.classList.remove('err');
+
+    const c = {
+      id:    editingContactId || uid(),
+      name,
+      role:  document.getElementById('iContactRole').value.trim(),
+      phone,
+      group: selContactGroup,
+      note:  document.getElementById('iContactNote').value.trim(),
+    };
+
+    if (editingContactId) {
+      const idx = contacts.findIndex(x => x.id === editingContactId);
+      if (idx >= 0) contacts[idx] = c; else contacts.push(c);
+    } else {
+      contacts.push(c);
+    }
+
+    saveContacts();
+    closeContactSheet();
+    renderContacts();
+  }
+
+  function deleteContact() {
+    if (!editingContactId || !confirm('이 연락처를 삭제할까요?')) return;
+    contacts = contacts.filter(c => c.id !== editingContactId);
+    saveContacts();
+    closeContactSheet();
+    renderContacts();
+  }
+
   // ── Utils ─────────────────────────────────────────────────────────
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
   function esc(s) {
@@ -893,6 +1209,7 @@
   }
 
   // ── Init ──────────────────────────────────────────────────────────
+  loadContacts();
   render();
   updateClock();
   setInterval(updateClock, 30000);
