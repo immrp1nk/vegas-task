@@ -579,6 +579,16 @@
     return (local - utc) / 60000;
   }
 
+  // HH:MM 문자열을 fromTz → activeTz 로 변환해 반환
+  function convertToActiveTz(time, fromTz, date) {
+    if (!time || fromTz === activeTz) return time;
+    const [h, m]   = time.split(':').map(Number);
+    const utcMin   = (h * 60 + m) - getOffsetMinutes(fromTz, date);
+    const localMin = utcMin + getOffsetMinutes(activeTz, date);
+    const wrapped  = ((localMin % 1440) + 1440) % 1440;
+    return `${String(Math.floor(wrapped / 60)).padStart(2,'0')}:${String(wrapped % 60).padStart(2,'0')}`;
+  }
+
   // 이벤트 시작 시간을 UTC 분(숫자)으로 반환 → 정렬 키
   function toUTCMinutes(ev, date) {
     if (!ev.startTime) return Infinity;
@@ -666,6 +676,7 @@
     activeTz  = TZ_LIST[(idx + 1) % TZ_LIST.length].id;
     localStorage.setItem(TZ_KEY, activeTz);
     updateClock();
+    renderEvents();
   }
 
   // ── Render ───────────────────────────────────────────────────────
@@ -731,17 +742,17 @@
       const isMulti   = ev.endDate && ev.endDate !== ev.startDate;
       const stz       = ev.startTz || DEFAULT_TZ;
       const etz       = ev.endTz   || DEFAULT_TZ;
-      const diffTz    = ev.startTime && ev.endTime && stz !== etz;
-      const sAbbr     = diffTz ? `<span class="ev-tz">${tzAbbr(stz)}</span>` : '';
-      const eAbbr     = diffTz ? `<span class="ev-tz"> ${tzAbbr(etz)}</span>` : '';
+      const dispStart = convertToActiveTz(ev.startTime, stz, ev.startDate || activeDate);
+      const dispEnd   = convertToActiveTz(ev.endTime,   etz, ev.endDate   || activeDate);
+      const abbrLabel = `<span class="ev-tz">${tzAbbr(activeTz)}</span>`;
       const fmt       = d => d ? d.slice(5).replace('-','/') : '';
       const multiTag  = isMulti
         ? `<div class="ev-multiday">🗓 ${fmt(ev.startDate)} ~ ${fmt(ev.endDate)}</div>`
         : '';
       return `<div class="event-card ${ev.cat}" onclick="openSheet('${ev.id}')">
         <div class="ev-time">
-          <div class="ev-start">${ev.startTime || '--:--'} ${sAbbr}</div>
-          ${ev.endTime ? `<div class="ev-end">${ev.endTime}${eAbbr}</div>` : ''}
+          <div class="ev-start">${dispStart || '--:--'} ${abbrLabel}</div>
+          ${dispEnd ? `<div class="ev-end">${dispEnd} ${abbrLabel}</div>` : ''}
         </div>
         <div class="ev-dot-col"><div class="ev-dot"></div></div>
         <div class="ev-body">
