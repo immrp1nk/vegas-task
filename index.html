@@ -49,17 +49,32 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 18px 10px;
+      padding: 14px 16px 8px;
     }
 
-    .header-title { font-size: 19px; font-weight: 800; color: #fff; letter-spacing: -0.4px; }
-    .header-sub   { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+    .header-title { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -0.4px; }
+    .header-sub   { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+    /* Timezone button */
+    .tz-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 22px;
+      padding: 7px 13px;
+      color: #fff;
+      cursor: pointer;
+      text-align: center;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+    .tz-btn-label { display: block; font-size: 10px; font-weight: 600; opacity: 0.65; letter-spacing: 0.3px; }
+    .tz-btn-time  { display: block; font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
 
     /* Day Tabs */
     .day-tabs {
       display: flex;
       overflow-x: auto;
-      padding: 0 10px 10px;
+      padding: 0 10px 8px;
       gap: 4px;
       scrollbar-width: none;
     }
@@ -67,116 +82,96 @@
 
     .day-tab {
       flex-shrink: 0;
-      padding: 7px 13px;
+      padding: 5px 11px 6px;
       border-radius: 22px;
       cursor: pointer;
-      color: rgba(255,255,255,0.45);
-      font-size: 11px;
-      font-weight: 600;
+      color: rgba(255,255,255,0.42);
       text-align: center;
       transition: all 0.18s;
-      line-height: 1.3;
       border: 1.5px solid transparent;
     }
-    .day-tab .dn { display: block; font-size: 16px; font-weight: 800; color: rgba(255,255,255,0.55); }
+    .day-tab .dn { display: block; font-size: 15px; font-weight: 800; color: rgba(255,255,255,0.52); }
+    .day-tab .dd { display: block; font-size: 11px; font-weight: 600; }
+    .day-tab .dw { display: block; font-size: 12px; margin-top: 2px; min-height: 14px; }
     .day-tab.active { background: #fff; color: var(--dark); border-color: #fff; }
     .day-tab.active .dn { color: var(--dark); }
     .day-tab.today .dn::after {
-      content: '';
-      display: block;
+      content: ''; display: block;
       width: 5px; height: 5px;
       background: #F97316;
       border-radius: 50%;
       margin: 2px auto 0;
     }
 
-    /* ── Stats Bar ──────────────────────────────────────────────── */
+    /* Weather bar */
+    .weather-bar {
+      display: none;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 18px 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.72);
+      border-top: 1px solid rgba(255,255,255,0.09);
+    }
+    .w-icon { font-size: 15px; }
+    .w-cond { font-weight: 700; }
+    .w-sep  { opacity: 0.35; }
+    .w-temp {}
+    .w-loc  { margin-left: auto; font-size: 11px; opacity: 0.5; }
+
+    /* ── Stats ──────────────────────────────────────────────────── */
     .stats-bar {
       background: var(--card);
       border-bottom: 1px solid var(--border);
       padding: 11px 16px 12px;
     }
-
-    .stats-top {
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 9px;
-    }
+    .stats-top { font-size: 12px; color: var(--muted); margin-bottom: 9px; }
     .stats-top strong { color: var(--text); font-size: 14px; }
-
     .stats-chips { display: flex; flex-wrap: wrap; gap: 7px; }
 
     .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 5px 11px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: all 0.15s;
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 11px; border-radius: 20px;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      border: 2px solid transparent; transition: all 0.15s;
       user-select: none;
     }
     .chip.meeting   { background: var(--meeting-bg);   color: var(--meeting); }
     .chip.dining    { background: var(--dining-bg);    color: var(--dining); }
     .chip.transport { background: var(--transport-bg); color: var(--transport); }
     .chip.leisure   { background: var(--leisure-bg);   color: var(--leisure); }
-    .chip.on        { border-color: currentColor; }
-    .chip.dim       { opacity: 0.35; }
+    .chip.on  { border-color: currentColor; }
+    .chip.dim { opacity: 0.35; }
 
     /* ── Events ─────────────────────────────────────────────────── */
     .events { padding: 14px 14px 0; }
 
-    .empty {
-      text-align: center;
-      padding: 64px 20px;
-      color: var(--muted);
-    }
-    .empty-icon { font-size: 52px; }
+    .empty { text-align: center; padding: 64px 20px; color: var(--muted); }
+    .empty-icon  { font-size: 52px; }
     .empty-label { font-size: 15px; font-weight: 600; color: #64748B; margin-top: 10px; }
     .empty-hint  { font-size: 13px; margin-top: 5px; }
 
     .event-card {
-      background: var(--card);
-      border-radius: 16px;
-      margin-bottom: 10px;
-      padding: 14px 15px;
-      display: flex;
-      gap: 12px;
-      cursor: pointer;
+      background: var(--card); border-radius: 16px;
+      margin-bottom: 10px; padding: 14px 15px;
+      display: flex; gap: 12px; cursor: pointer;
       border-left: 4px solid transparent;
       box-shadow: 0 1px 5px rgba(0,0,0,0.07);
       transition: transform 0.1s, box-shadow 0.1s;
       -webkit-user-select: none;
     }
-    .event-card:active  { transform: scale(0.975); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .event-card:active { transform: scale(0.975); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
     .event-card.meeting   { border-left-color: var(--meeting); }
     .event-card.dining    { border-left-color: var(--dining); }
     .event-card.transport { border-left-color: var(--transport); }
     .event-card.leisure   { border-left-color: var(--leisure); }
 
-    .ev-time {
-      flex-shrink: 0;
-      width: 50px;
-      text-align: right;
-      padding-top: 2px;
-    }
+    .ev-time { flex-shrink: 0; width: 50px; text-align: right; padding-top: 2px; }
     .ev-start { font-size: 13px; font-weight: 700; }
     .ev-end   { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
-    .ev-dot-col {
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding-top: 5px;
-    }
-    .ev-dot {
-      width: 9px; height: 9px;
-      border-radius: 50%;
-    }
+    .ev-dot-col { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding-top: 5px; }
+    .ev-dot { width: 9px; height: 9px; border-radius: 50%; }
     .meeting   .ev-dot { background: var(--meeting); }
     .dining    .ev-dot { background: var(--dining); }
     .transport .ev-dot { background: var(--transport); }
@@ -190,190 +185,123 @@
     .leisure   .ev-badge { color: var(--leisure); }
 
     .ev-title {
-      font-size: 15px;
-      font-weight: 700;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: 15px; font-weight: 700;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       margin-bottom: 3px;
     }
-    .ev-place {
-      font-size: 12px;
-      color: var(--muted);
-      display: flex;
-      align-items: flex-start;
-      gap: 3px;
+    .ev-place { font-size: 12px; color: var(--muted); display: flex; align-items: flex-start; gap: 3px; }
+    .ev-memo  {
+      font-size: 12px; color: #64748B; margin-top: 4px; line-height: 1.45;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
     }
-    .ev-memo {
-      font-size: 12px;
-      color: #64748B;
-      margin-top: 4px;
-      line-height: 1.45;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+    .ev-multiday {
+      display: inline-flex; align-items: center; gap: 3px;
+      background: #F1F5F9; border-radius: 6px;
+      padding: 2px 7px; font-size: 10px; font-weight: 700;
+      color: #64748B; margin-top: 5px;
     }
 
     /* ── FAB ────────────────────────────────────────────────────── */
     .fab {
-      position: fixed;
-      bottom: 26px;
-      right: 20px;
-      width: 60px; height: 60px;
-      border-radius: 30px;
+      position: fixed; bottom: 26px; right: 20px;
+      width: 60px; height: 60px; border-radius: 30px;
       background: linear-gradient(135deg, #1E3A5F, #0F172A);
-      color: #fff;
-      font-size: 30px;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      color: #fff; font-size: 30px; border: none;
+      display: flex; align-items: center; justify-content: center;
       box-shadow: 0 6px 24px rgba(15,23,42,0.45);
-      cursor: pointer;
-      z-index: 200;
-      transition: transform 0.15s;
+      cursor: pointer; z-index: 200; transition: transform 0.15s;
     }
     .fab:active { transform: scale(0.88); }
 
-    /* ── Modal ──────────────────────────────────────────────────── */
+    /* ── Sheet Modal ─────────────────────────────────────────────── */
     .overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.55);
-      z-index: 300;
-      display: none;
-      align-items: flex-end;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+      z-index: 300; display: none; align-items: flex-end;
       backdrop-filter: blur(2px);
     }
     .overlay.open { display: flex; }
 
     .sheet {
-      background: var(--card);
-      border-radius: 24px 24px 0 0;
-      width: 100%;
-      max-height: 92vh;
-      overflow-y: auto;
+      background: var(--card); border-radius: 24px 24px 0 0;
+      width: 100%; max-height: 93vh; overflow-y: auto;
       padding-bottom: max(34px, env(safe-area-inset-bottom));
       animation: slideUp 0.25s cubic-bezier(0.32,0.72,0,1);
     }
-
     @keyframes slideUp {
       from { transform: translateY(100%); }
       to   { transform: translateY(0); }
     }
 
-    .sheet-handle {
-      width: 38px; height: 4px;
-      background: var(--border);
-      border-radius: 2px;
-      margin: 12px auto 0;
-    }
-
+    .sheet-handle { width: 38px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto 0; }
     .sheet-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 20px 12px;
-      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px 12px; border-bottom: 1px solid var(--border);
     }
     .sheet-title { font-size: 17px; font-weight: 800; }
     .sheet-close {
-      background: var(--bg);
-      border: none;
-      width: 30px; height: 30px;
-      border-radius: 15px;
-      font-size: 16px;
-      color: var(--muted);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: var(--bg); border: none; width: 30px; height: 30px;
+      border-radius: 15px; font-size: 16px; color: var(--muted);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
     }
 
     .sheet-body { padding: 18px 18px 0; }
 
     .fg { margin-bottom: 15px; }
-    .fl {
-      display: block;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      margin-bottom: 7px;
-    }
+    .fl { display: block; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 7px; }
 
     .fi {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: 12px;
-      font-size: 15px;
-      font-family: inherit;
-      background: #fff;
-      outline: none;
-      transition: border-color 0.18s;
-      -webkit-appearance: none;
+      width: 100%; padding: 12px 14px;
+      border: 1.5px solid var(--border); border-radius: 12px;
+      font-size: 15px; font-family: inherit; background: #fff;
+      outline: none; transition: border-color 0.18s;
+      -webkit-appearance: none; color: var(--text);
     }
     .fi:focus { border-color: #1E3A5F; }
     .fi.err   { border-color: #EF4444; }
     textarea.fi { resize: none; height: 76px; }
 
-    .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .sub-label { display: block; font-size: 10px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
 
     /* Category buttons */
     .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .cat-btn {
-      padding: 11px 8px;
-      border-radius: 12px;
-      border: 2px solid var(--border);
-      background: var(--card);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.15s;
-      font-family: inherit;
-      color: var(--text);
+      padding: 11px 8px; border-radius: 12px; border: 2px solid var(--border);
+      background: var(--card); font-size: 13px; font-weight: 600;
+      cursor: pointer; text-align: center; transition: all 0.15s;
+      font-family: inherit; color: var(--text);
     }
     .cat-btn.sel.meeting   { background: var(--meeting-bg);   border-color: var(--meeting);   color: var(--meeting); }
     .cat-btn.sel.dining    { background: var(--dining-bg);    border-color: var(--dining);    color: var(--dining); }
     .cat-btn.sel.transport { background: var(--transport-bg); border-color: var(--transport); color: var(--transport); }
     .cat-btn.sel.leisure   { background: var(--leisure-bg);   border-color: var(--leisure);   color: var(--leisure); }
 
-    /* Buttons */
+    /* Timezone selector */
+    .tz-row { display: flex; gap: 8px; }
+    .tz-opt {
+      flex: 1; padding: 10px 8px; border-radius: 12px;
+      border: 2px solid var(--border); background: var(--card);
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      text-align: center; font-family: inherit; color: var(--text);
+      transition: all 0.15s;
+    }
+    .tz-opt.sel { background: #EFF6FF; border-color: var(--meeting); color: var(--meeting); }
+
+    /* Action buttons */
     .btn-save {
-      display: block;
-      width: 100%;
-      padding: 15px;
+      display: block; width: 100%; padding: 15px;
       background: linear-gradient(135deg, #1E3A5F, #0F172A);
-      color: #fff;
-      border: none;
-      border-radius: 14px;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: inherit;
-      margin-top: 8px;
-      transition: opacity 0.15s;
+      color: #fff; border: none; border-radius: 14px;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      font-family: inherit; margin-top: 8px; transition: opacity 0.15s;
     }
     .btn-save:active { opacity: 0.8; }
-
     .btn-del {
-      display: none;
-      width: 100%;
-      padding: 14px;
-      background: none;
-      border: 1.5px solid #FCA5A5;
-      border-radius: 14px;
-      color: #EF4444;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: inherit;
-      margin-top: 10px;
-      margin-bottom: 4px;
+      display: none; width: 100%; padding: 14px;
+      background: none; border: 1.5px solid #FCA5A5;
+      border-radius: 14px; color: #EF4444;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      font-family: inherit; margin-top: 10px; margin-bottom: 4px;
       transition: background 0.15s;
     }
     .btn-del:active { background: #FEF2F2; }
@@ -388,8 +316,13 @@
       <div class="header-title">🎰 Vegas 출장 일정</div>
       <div class="header-sub">Mar 2 – Mar 8, 2026</div>
     </div>
+    <button class="tz-btn" onclick="cycleTz()">
+      <span class="tz-btn-label" id="tzLabel">Las Vegas</span>
+      <span class="tz-btn-time"  id="tzTime">--:--</span>
+    </button>
   </div>
-  <div class="day-tabs" id="dayTabs"></div>
+  <div class="day-tabs"   id="dayTabs"></div>
+  <div class="weather-bar" id="weatherBar"></div>
 </div>
 
 <!-- ── Stats ─────────────────────────────────────────────────────── -->
@@ -415,6 +348,7 @@
     <div class="sheet-body">
       <input type="hidden" id="editId">
 
+      <!-- Category -->
       <div class="fg">
         <span class="fl">카테고리</span>
         <div class="cat-grid">
@@ -425,101 +359,236 @@
         </div>
       </div>
 
+      <!-- Title -->
       <div class="fg">
         <label class="fl" for="iTitle">제목 *</label>
         <input class="fi" type="text" id="iTitle" placeholder="일정 제목을 입력하세요">
       </div>
 
+      <!-- Start / End Date -->
       <div class="fg">
-        <label class="fl" for="iDate">날짜</label>
-        <select class="fi" id="iDate"></select>
-      </div>
-
-      <div class="fg">
-        <span class="fl">시간</span>
-        <div class="time-row">
-          <input class="fi" type="time" id="iStart">
-          <input class="fi" type="time" id="iEnd">
+        <span class="fl">날짜</span>
+        <div class="two-col">
+          <div>
+            <span class="sub-label">시작일</span>
+            <select class="fi" id="iStartDate" onchange="onStartDateChange()"></select>
+          </div>
+          <div>
+            <span class="sub-label">종료일</span>
+            <select class="fi" id="iEndDate"></select>
+          </div>
         </div>
       </div>
 
+      <!-- Start / End Time (5-min step) -->
+      <div class="fg">
+        <span class="fl">시간</span>
+        <div class="two-col">
+          <div>
+            <span class="sub-label">시작</span>
+            <input class="fi" type="time" id="iStart" step="300">
+          </div>
+          <div>
+            <span class="sub-label">종료</span>
+            <input class="fi" type="time" id="iEnd" step="300">
+          </div>
+        </div>
+      </div>
+
+      <!-- Place -->
       <div class="fg">
         <label class="fl" for="iPlace">장소</label>
         <input class="fi" type="text" id="iPlace" placeholder="장소 또는 주소">
       </div>
 
+      <!-- Memo -->
       <div class="fg">
         <label class="fl" for="iMemo">메모</label>
         <textarea class="fi" id="iMemo" placeholder="추가 정보나 메모"></textarea>
       </div>
 
+      <!-- Timezone selector -->
+      <div class="fg">
+        <span class="fl">시간대</span>
+        <div class="tz-row">
+          <button class="tz-opt" data-tz="America/Los_Angeles" onclick="pickTz('America/Los_Angeles')">🌴 Vegas (PST)</button>
+          <button class="tz-opt" data-tz="Asia/Seoul"          onclick="pickTz('Asia/Seoul')">🏠 서울 (KST)</button>
+        </div>
+      </div>
+
       <button class="btn-save" onclick="saveEvent()">저장</button>
-      <button class="btn-del" id="btnDel" onclick="deleteEvent()">🗑 이 일정 삭제</button>
+      <button class="btn-del"  id="btnDel" onclick="deleteEvent()">🗑 이 일정 삭제</button>
     </div>
   </div>
 </div>
 
 <script>
-  // ── Constants ────────────────────────────────────────────────────
+  // ── Constants ───────────────────────────────────────────────────
   const DAYS = [
-    { date:'2026-03-02', label:'3/2',  day:'월' },
-    { date:'2026-03-03', label:'3/3',  day:'화' },
-    { date:'2026-03-04', label:'3/4',  day:'수' },
-    { date:'2026-03-05', label:'3/5',  day:'목' },
-    { date:'2026-03-06', label:'3/6',  day:'금' },
-    { date:'2026-03-07', label:'3/7',  day:'토' },
-    { date:'2026-03-08', label:'3/8',  day:'일' },
+    {date:'2026-03-02',label:'3/2',day:'월'},
+    {date:'2026-03-03',label:'3/3',day:'화'},
+    {date:'2026-03-04',label:'3/4',day:'수'},
+    {date:'2026-03-05',label:'3/5',day:'목'},
+    {date:'2026-03-06',label:'3/6',day:'금'},
+    {date:'2026-03-07',label:'3/7',day:'토'},
+    {date:'2026-03-08',label:'3/8',day:'일'},
   ];
 
   const CATS = {
-    meeting:   { icon:'🤝', label:'미팅' },
-    dining:    { icon:'🍽️', label:'식사/네트워킹' },
-    transport: { icon:'✈️', label:'이동/교통' },
-    leisure:   { icon:'🎰', label:'여가' },
+    meeting:   {icon:'🤝', label:'미팅'},
+    dining:    {icon:'🍽️', label:'식사/네트워킹'},
+    transport: {icon:'✈️', label:'이동/교통'},
+    leisure:   {icon:'🎰', label:'여가'},
   };
 
-  const KEY = 'vegas26';
+  const TZ_LIST = [
+    {id:'America/Los_Angeles', label:'Las Vegas', short:'PST'},
+    {id:'Asia/Seoul',          label:'서울',       short:'KST'},
+  ];
 
-  // ── State ─────────────────────────────────────────────────────────
+  // WMO weather codes → emoji/label
+  const WMO = {
+    0: {e:'☀️',l:'맑음'},       1: {e:'🌤️',l:'구름 조금'},
+    2: {e:'⛅',l:'구름 많음'},   3: {e:'☁️',l:'흐림'},
+    45:{e:'🌫️',l:'안개'},       48:{e:'🌫️',l:'안개'},
+    51:{e:'🌦️',l:'이슬비'},     53:{e:'🌦️',l:'이슬비'},    55:{e:'🌦️',l:'이슬비'},
+    61:{e:'🌧️',l:'비'},         63:{e:'🌧️',l:'비'},         65:{e:'🌧️',l:'강한 비'},
+    71:{e:'❄️',l:'눈'},          73:{e:'❄️',l:'눈'},          75:{e:'❄️',l:'강한 눈'},
+    80:{e:'🌧️',l:'소나기'},     81:{e:'🌧️',l:'소나기'},     82:{e:'⛈️',l:'강한 소나기'},
+    95:{e:'⛈️',l:'뇌우'},       96:{e:'⛈️',l:'뇌우'},        99:{e:'⛈️',l:'뇌우'},
+  };
+  function wmo(code) { return WMO[code] || {e:'🌡️',l:'정보 없음'}; }
+
+  const KEY    = 'vegas26';
+  const TZ_KEY = 'vegas26_tz';
+
+  // ── State ────────────────────────────────────────────────────────
   let activeDate  = DAYS[0].date;
-  let filters     = new Set();   // empty = show all
+  let filters     = new Set();
   let selCat      = 'meeting';
   let editingId   = null;
+  let weatherData = null;
+  let activeTz    = localStorage.getItem(TZ_KEY) || 'America/Los_Angeles';
 
-  // ── Storage ───────────────────────────────────────────────────────
+  // ── Storage (flat array, migrates old format) ────────────────────
   function load() {
-    try { return JSON.parse(localStorage.getItem(KEY) || '{}'); }
-    catch { return {}; }
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return [];
+      const p = JSON.parse(raw);
+      if (Array.isArray(p)) return p;
+      // Migrate old {date:[events]} format
+      return Object.entries(p).flatMap(([date, evs]) =>
+        evs.map(ev => ({
+          ...ev,
+          startDate: ev.startDate || date,
+          endDate:   ev.endDate   || date,
+          startTime: ev.startTime || ev.start || '',
+          endTime:   ev.endTime   || ev.end   || '',
+        }))
+      );
+    } catch { return []; }
   }
-  function save(data) { localStorage.setItem(KEY, JSON.stringify(data)); }
 
+  function save(events) { localStorage.setItem(KEY, JSON.stringify(events)); }
+
+  // Events visible on a given date (includes multi-day spans)
   function eventsOn(date) {
-    return (load()[date] || []).slice().sort((a,b) => (a.start||'').localeCompare(b.start||''));
+    return load()
+      .filter(ev => {
+        const s = ev.startDate;
+        const e = ev.endDate || ev.startDate;
+        return s <= date && date <= e;
+      })
+      .sort((a,b) => (a.startTime||'').localeCompare(b.startTime||''));
   }
-  function allEvents() { return Object.values(load()).flat(); }
 
-  // ── Render ────────────────────────────────────────────────────────
-  function render() {
-    renderTabs();
-    renderStats();
-    renderEvents();
+  // ── Weather ──────────────────────────────────────────────────────
+  async function fetchWeather() {
+    try {
+      const res = await fetch(
+        'https://api.open-meteo.com/v1/forecast' +
+        '?latitude=36.1699&longitude=-115.1398' +
+        '&daily=temperature_2m_max,temperature_2m_min,weathercode' +
+        '&temperature_unit=celsius' +
+        '&timezone=America%2FLos_Angeles' +
+        '&start_date=2026-03-02&end_date=2026-03-08'
+      );
+      const j = await res.json();
+      weatherData = {};
+      j.daily.time.forEach((date, i) => {
+        weatherData[date] = {
+          max:  Math.round(j.daily.temperature_2m_max[i]),
+          min:  Math.round(j.daily.temperature_2m_min[i]),
+          code: j.daily.weathercode[i],
+        };
+      });
+      renderTabs();
+      renderWeather();
+    } catch(e) { console.warn('Weather fetch failed:', e); }
   }
+
+  // ── Timezone clock ───────────────────────────────────────────────
+  function updateClock() {
+    const now = new Date();
+    const t   = now.toLocaleTimeString('ko-KR', {
+      timeZone: activeTz, hour:'2-digit', minute:'2-digit', hour12: false,
+    });
+    const tz = TZ_LIST.find(x => x.id === activeTz);
+    document.getElementById('tzLabel').textContent = tz ? tz.label : '';
+    document.getElementById('tzTime').textContent  = t;
+  }
+
+  function cycleTz() {
+    const idx = TZ_LIST.findIndex(t => t.id === activeTz);
+    activeTz  = TZ_LIST[(idx + 1) % TZ_LIST.length].id;
+    localStorage.setItem(TZ_KEY, activeTz);
+    updateClock();
+    syncTzOpts();
+  }
+
+  function syncTzOpts() {
+    document.querySelectorAll('.tz-opt').forEach(btn => {
+      btn.classList.toggle('sel', btn.dataset.tz === activeTz);
+    });
+  }
+
+  // ── Render ───────────────────────────────────────────────────────
+  function render() { renderTabs(); renderWeather(); renderStats(); renderEvents(); }
 
   function renderTabs() {
     const today = new Date().toISOString().slice(0,10);
-    document.getElementById('dayTabs').innerHTML = DAYS.map(d => `
-      <div class="day-tab${d.date===activeDate?' active':''}${d.date===today?' today':''}"
-           onclick="switchDay('${d.date}')">
-        <span class="dn">${d.label}</span>${d.day}
-      </div>`).join('');
+    document.getElementById('dayTabs').innerHTML = DAYS.map(d => {
+      const w  = weatherData?.[d.date];
+      const we = w ? wmo(w.code).e : '';
+      return `<div class="day-tab${d.date===activeDate?' active':''}${d.date===today?' today':''}"
+                   onclick="switchDay('${d.date}')">
+        <span class="dn">${d.label}</span>
+        <span class="dd">${d.day}</span>
+        <span class="dw">${we}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function renderWeather() {
+    const el = document.getElementById('weatherBar');
+    const w  = weatherData?.[activeDate];
+    if (!w) { el.style.display = 'none'; return; }
+    const info = wmo(w.code);
+    el.style.display = 'flex';
+    el.innerHTML = `
+      <span class="w-icon">${info.e}</span>
+      <span class="w-cond">${info.l}</span>
+      <span class="w-sep">·</span>
+      <span class="w-temp">최저 ${w.min}° / 최고 ${w.max}°</span>
+      <span class="w-loc">📍 Las Vegas, NV</span>`;
   }
 
   function renderStats() {
-    const all = allEvents();
-    const counts = { meeting:0, dining:0, transport:0, leisure:0 };
-    all.forEach(e => { if (e.cat in counts) counts[e.cat]++; });
+    const all    = load();
+    const counts = {meeting:0, dining:0, transport:0, leisure:0};
+    all.forEach(ev => { if (ev.cat in counts) counts[ev.cat]++; });
     document.getElementById('totalCount').textContent = all.length;
-
     document.getElementById('statsChips').innerHTML = Object.entries(CATS).map(([k,c]) => {
       const on  = filters.has(k);
       const dim = filters.size > 0 && !on;
@@ -530,9 +599,9 @@
   }
 
   function renderEvents() {
-    const list = eventsOn(activeDate);
-    const shown = filters.size ? list.filter(e => filters.has(e.cat)) : list;
-    const el = document.getElementById('eventsContainer');
+    const list  = eventsOn(activeDate);
+    const shown = filters.size ? list.filter(ev => filters.has(ev.cat)) : list;
+    const el    = document.getElementById('eventsContainer');
 
     if (!shown.length) {
       el.innerHTML = `<div class="empty">
@@ -543,66 +612,71 @@
       return;
     }
 
-    el.innerHTML = shown.map(e => `
-      <div class="event-card ${e.cat}" onclick="openSheet('${e.id}')">
+    el.innerHTML = shown.map(ev => {
+      const isMulti = ev.endDate && ev.endDate !== ev.startDate;
+      const fmt = d => d ? d.slice(5).replace('-','/') : '';
+      const multiTag = isMulti
+        ? `<div class="ev-multiday">🗓 ${fmt(ev.startDate)} ~ ${fmt(ev.endDate)}</div>`
+        : '';
+      return `<div class="event-card ${ev.cat}" onclick="openSheet('${ev.id}')">
         <div class="ev-time">
-          <div class="ev-start">${e.start||'--:--'}</div>
-          ${e.end ? `<div class="ev-end">${e.end}</div>` : ''}
+          <div class="ev-start">${ev.startTime || '--:--'}</div>
+          ${ev.endTime ? `<div class="ev-end">${ev.endTime}</div>` : ''}
         </div>
         <div class="ev-dot-col"><div class="ev-dot"></div></div>
         <div class="ev-body">
-          <div class="ev-badge">${CATS[e.cat].icon} ${CATS[e.cat].label}</div>
-          <div class="ev-title">${esc(e.title)}</div>
-          ${e.place ? `<div class="ev-place">📍 ${esc(e.place)}</div>` : ''}
-          ${e.memo  ? `<div class="ev-memo">${esc(e.memo)}</div>` : ''}
+          <div class="ev-badge">${CATS[ev.cat].icon} ${CATS[ev.cat].label}</div>
+          <div class="ev-title">${esc(ev.title)}</div>
+          ${ev.place ? `<div class="ev-place">📍 ${esc(ev.place)}</div>` : ''}
+          ${ev.memo  ? `<div class="ev-memo">${esc(ev.memo)}</div>` : ''}
+          ${multiTag}
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 
-  // ── Interactions ──────────────────────────────────────────────────
-  function switchDay(date) { activeDate = date; render(); }
+  // ── Interactions ─────────────────────────────────────────────────
+  function switchDay(date) {
+    activeDate = date;
+    renderTabs(); renderWeather(); renderStats(); renderEvents();
+  }
 
   function toggleFilter(cat) {
     filters.has(cat) ? filters.delete(cat) : filters.add(cat);
-    render();
+    renderStats(); renderEvents();
   }
 
-  // ── Sheet ─────────────────────────────────────────────────────────
+  // ── Sheet ────────────────────────────────────────────────────────
   function openSheet(id = null) {
     editingId = id;
-
-    // Populate date select
-    const sel = document.getElementById('iDate');
-    sel.innerHTML = DAYS.map(d =>
-      `<option value="${d.date}"${d.date===activeDate?' selected':''}>${d.label}(${d.day})</option>`
-    ).join('');
+    populateDateSelects();
 
     if (id) {
-      const data = load();
-      let ev = null, evDate = null;
-      for (const [d, arr] of Object.entries(data)) {
-        ev = arr.find(e => e.id === id);
-        if (ev) { evDate = d; break; }
-      }
+      const ev = load().find(e => e.id === id);
       if (!ev) return;
-
-      document.getElementById('sheetTitle').textContent = '일정 수정';
-      sel.value = evDate;
-      document.getElementById('iTitle').value = ev.title  || '';
-      document.getElementById('iStart').value = ev.start  || '';
-      document.getElementById('iEnd').value   = ev.end    || '';
-      document.getElementById('iPlace').value = ev.place  || '';
-      document.getElementById('iMemo').value  = ev.memo   || '';
+      document.getElementById('sheetTitle').textContent   = '일정 수정';
+      document.getElementById('iStartDate').value = ev.startDate || activeDate;
+      document.getElementById('iEndDate').value   = ev.endDate   || ev.startDate || activeDate;
+      document.getElementById('iTitle').value     = ev.title     || '';
+      document.getElementById('iStart').value     = ev.startTime || '';
+      document.getElementById('iEnd').value       = ev.endTime   || '';
+      document.getElementById('iPlace').value     = ev.place     || '';
+      document.getElementById('iMemo').value      = ev.memo      || '';
       document.getElementById('btnDel').style.display = 'block';
       pickCat(ev.cat || 'meeting');
     } else {
-      document.getElementById('sheetTitle').textContent = '일정 추가';
-      ['iTitle','iStart','iEnd','iPlace','iMemo'].forEach(i => document.getElementById(i).value = '');
+      document.getElementById('sheetTitle').textContent   = '일정 추가';
+      document.getElementById('iStartDate').value = activeDate;
+      document.getElementById('iEndDate').value   = activeDate;
+      ['iTitle','iStart','iEnd','iPlace','iMemo'].forEach(i =>
+        document.getElementById(i).value = ''
+      );
       document.getElementById('iTitle').classList.remove('err');
       document.getElementById('btnDel').style.display = 'none';
       pickCat('meeting');
     }
 
+    syncTzOpts();
     document.getElementById('overlay').classList.add('open');
   }
 
@@ -613,54 +687,70 @@
 
   function onOverlayClick(e) { if (e.target === e.currentTarget) closeSheet(); }
 
+  function populateDateSelects() {
+    const opts = DAYS.map(d =>
+      `<option value="${d.date}">${d.label}(${d.day})</option>`
+    ).join('');
+    document.getElementById('iStartDate').innerHTML = opts;
+    document.getElementById('iEndDate').innerHTML   = opts;
+  }
+
+  function onStartDateChange() {
+    const s = document.getElementById('iStartDate').value;
+    if (document.getElementById('iEndDate').value < s)
+      document.getElementById('iEndDate').value = s;
+  }
+
   function pickCat(cat) {
     selCat = cat;
     document.querySelectorAll('.cat-btn').forEach(b => {
-      b.classList.remove('sel');
-      if (b.classList.contains(cat)) b.classList.add('sel');
+      b.classList.toggle('sel', b.classList.contains(cat));
     });
   }
 
-  // ── CRUD ──────────────────────────────────────────────────────────
+  function pickTz(tz) {
+    activeTz = tz;
+    localStorage.setItem(TZ_KEY, tz);
+    updateClock();
+    syncTzOpts();
+  }
+
+  // ── CRUD ─────────────────────────────────────────────────────────
   function saveEvent() {
-    const title = document.getElementById('iTitle').value.trim();
+    const title   = document.getElementById('iTitle').value.trim();
     const titleEl = document.getElementById('iTitle');
     if (!title) { titleEl.classList.add('err'); titleEl.focus(); return; }
     titleEl.classList.remove('err');
 
-    const date = document.getElementById('iDate').value;
+    const startDate = document.getElementById('iStartDate').value;
+    let   endDate   = document.getElementById('iEndDate').value;
+    if (endDate < startDate) endDate = startDate;
+
     const ev = {
-      id:    editingId || uid(),
-      cat:   selCat,
+      id:        editingId || uid(),
+      cat:       selCat,
       title,
-      start: document.getElementById('iStart').value,
-      end:   document.getElementById('iEnd').value,
-      place: document.getElementById('iPlace').value.trim(),
-      memo:  document.getElementById('iMemo').value.trim(),
+      startDate,
+      endDate,
+      startTime: document.getElementById('iStart').value,
+      endTime:   document.getElementById('iEnd').value,
+      place:     document.getElementById('iPlace').value.trim(),
+      memo:      document.getElementById('iMemo').value.trim(),
     };
 
-    const data = load();
-    if (editingId) {
-      Object.keys(data).forEach(d => {
-        data[d] = data[d].filter(e => e.id !== editingId);
-      });
-    }
-    if (!data[date]) data[date] = [];
-    data[date].push(ev);
-    save(data);
+    let events = load();
+    if (editingId) events = events.filter(e => e.id !== editingId);
+    events.push(ev);
+    save(events);
 
     closeSheet();
-    activeDate = date;
+    activeDate = startDate;
     render();
   }
 
   function deleteEvent() {
     if (!editingId || !confirm('이 일정을 삭제할까요?')) return;
-    const data = load();
-    Object.keys(data).forEach(d => {
-      data[d] = data[d].filter(e => e.id !== editingId);
-    });
-    save(data);
+    save(load().filter(e => e.id !== editingId));
     closeSheet();
     render();
   }
@@ -675,6 +765,9 @@
 
   // ── Init ──────────────────────────────────────────────────────────
   render();
+  updateClock();
+  setInterval(updateClock, 30000);
+  fetchWeather();
 </script>
 </body>
 </html>
