@@ -7,6 +7,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Vegas 출장">
   <title>🎰 Vegas 출장 일정</title>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -49,11 +54,23 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 8px;
       padding: 14px 16px 8px;
     }
 
     .header-title { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -0.4px; }
     .header-sub   { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+    /* Sync badge */
+    .sync-badge {
+      font-size: 11px; font-weight: 600;
+      padding: 4px 9px; border-radius: 10px;
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.65);
+      flex-shrink: 0; white-space: nowrap;
+    }
+    .sync-badge.ok  { background: rgba(16,185,129,0.25); color: #6EE7B7; }
+    .sync-badge.off { background: rgba(239,68,68,0.2);   color: #FCA5A5; }
 
     /* Timezone button */
     .tz-btn {
@@ -116,7 +133,6 @@
     .w-icon { font-size: 15px; }
     .w-cond { font-weight: 700; }
     .w-sep  { opacity: 0.35; }
-    .w-temp {}
     .w-loc  { margin-left: auto; font-size: 11px; opacity: 0.5; }
 
     /* ── Stats ──────────────────────────────────────────────────── */
@@ -166,9 +182,11 @@
     .event-card.transport { border-left-color: var(--transport); }
     .event-card.leisure   { border-left-color: var(--leisure); }
 
-    .ev-time { flex-shrink: 0; width: 50px; text-align: right; padding-top: 2px; }
+    .ev-time { flex-shrink: 0; width: 58px; text-align: right; padding-top: 2px; }
     .ev-start { font-size: 13px; font-weight: 700; }
-    .ev-end   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .ev-tz    { font-size: 10px; color: var(--muted); font-weight: 600; }
+    .ev-end   { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .ev-end .ev-tz { display: inline; }
 
     .ev-dot-col { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding-top: 5px; }
     .ev-dot { width: 9px; height: 9px; border-radius: 50%; }
@@ -260,6 +278,15 @@
     .fi.err   { border-color: #EF4444; }
     textarea.fi { resize: none; height: 76px; }
 
+    /* Timezone select below time input */
+    select.tz-sel {
+      margin-top: 6px;
+      padding: 9px 10px;
+      font-size: 12px;
+      background: var(--bg);
+      color: #475569;
+    }
+
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .sub-label { display: block; font-size: 10px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
 
@@ -275,17 +302,6 @@
     .cat-btn.sel.dining    { background: var(--dining-bg);    border-color: var(--dining);    color: var(--dining); }
     .cat-btn.sel.transport { background: var(--transport-bg); border-color: var(--transport); color: var(--transport); }
     .cat-btn.sel.leisure   { background: var(--leisure-bg);   border-color: var(--leisure);   color: var(--leisure); }
-
-    /* Timezone selector */
-    .tz-row { display: flex; gap: 8px; }
-    .tz-opt {
-      flex: 1; padding: 10px 8px; border-radius: 12px;
-      border: 2px solid var(--border); background: var(--card);
-      font-size: 13px; font-weight: 600; cursor: pointer;
-      text-align: center; font-family: inherit; color: var(--text);
-      transition: all 0.15s;
-    }
-    .tz-opt.sel { background: #EFF6FF; border-color: var(--meeting); color: var(--meeting); }
 
     /* Action buttons */
     .btn-save {
@@ -316,12 +332,13 @@
       <div class="header-title">🎰 Vegas 출장 일정</div>
       <div class="header-sub">Mar 2 – Mar 8, 2026</div>
     </div>
+    <span class="sync-badge" id="syncBadge"></span>
     <button class="tz-btn" onclick="cycleTz()">
       <span class="tz-btn-label" id="tzLabel">Las Vegas</span>
       <span class="tz-btn-time"  id="tzTime">--:--</span>
     </button>
   </div>
-  <div class="day-tabs"   id="dayTabs"></div>
+  <div class="day-tabs"    id="dayTabs"></div>
   <div class="weather-bar" id="weatherBar"></div>
 </div>
 
@@ -380,17 +397,25 @@
         </div>
       </div>
 
-      <!-- Start / End Time (5-min step) -->
+      <!-- Start / End Time + per-field Timezone -->
       <div class="fg">
-        <span class="fl">시간</span>
+        <span class="fl">시간 & 시간대</span>
         <div class="two-col">
           <div>
             <span class="sub-label">시작</span>
             <input class="fi" type="time" id="iStart" step="300">
+            <select class="fi tz-sel" id="iStartTz">
+              <option value="America/Los_Angeles">🌴 Vegas (PST)</option>
+              <option value="Asia/Seoul">🏠 서울 (KST)</option>
+            </select>
           </div>
           <div>
             <span class="sub-label">종료</span>
             <input class="fi" type="time" id="iEnd" step="300">
+            <select class="fi tz-sel" id="iEndTz">
+              <option value="America/Los_Angeles">🌴 Vegas (PST)</option>
+              <option value="Asia/Seoul">🏠 서울 (KST)</option>
+            </select>
           </div>
         </div>
       </div>
@@ -407,15 +432,6 @@
         <textarea class="fi" id="iMemo" placeholder="추가 정보나 메모"></textarea>
       </div>
 
-      <!-- Timezone selector -->
-      <div class="fg">
-        <span class="fl">시간대</span>
-        <div class="tz-row">
-          <button class="tz-opt" data-tz="America/Los_Angeles" onclick="pickTz('America/Los_Angeles')">🌴 Vegas (PST)</button>
-          <button class="tz-opt" data-tz="Asia/Seoul"          onclick="pickTz('Asia/Seoul')">🏠 서울 (KST)</button>
-        </div>
-      </div>
-
       <button class="btn-save" onclick="saveEvent()">저장</button>
       <button class="btn-del"  id="btnDel" onclick="deleteEvent()">🗑 이 일정 삭제</button>
     </div>
@@ -423,6 +439,21 @@
 </div>
 
 <script>
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ★ Firebase 설정 — console.firebase.google.com 에서 복사해 붙여넣기
+  //   프로젝트 설정 > 일반 > 내 앱 > firebaseConfig
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  const FIREBASE_CONFIG = {
+    apiKey:            "",   // ← 여기에 붙여넣기
+    authDomain:        "",
+    databaseURL:       "",   // ← 필수: "https://xxx-default-rtdb.firebaseio.com"
+    projectId:         "",
+    storageBucket:     "",
+    messagingSenderId: "",
+    appId:             "",
+  };
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   // ── Constants ───────────────────────────────────────────────────
   const DAYS = [
     {date:'2026-03-02',label:'3/2',day:'월'},
@@ -442,11 +473,13 @@
   };
 
   const TZ_LIST = [
-    {id:'America/Los_Angeles', label:'Las Vegas', short:'PST'},
-    {id:'Asia/Seoul',          label:'서울',       short:'KST'},
+    {id:'America/Los_Angeles', label:'Las Vegas'},
+    {id:'Asia/Seoul',          label:'서울'},
   ];
 
-  // WMO weather codes → emoji/label
+  const DEFAULT_TZ = 'America/Los_Angeles';
+
+  // WMO weather codes
   const WMO = {
     0: {e:'☀️',l:'맑음'},       1: {e:'🌤️',l:'구름 조금'},
     2: {e:'⛅',l:'구름 많음'},   3: {e:'☁️',l:'흐림'},
@@ -459,42 +492,93 @@
   };
   function wmo(code) { return WMO[code] || {e:'🌡️',l:'정보 없음'}; }
 
+  // Returns short timezone abbreviation e.g. "PST", "KST"
+  function tzAbbr(tzId) {
+    if (!tzId) return '';
+    try {
+      return new Intl.DateTimeFormat('en-US', {timeZone: tzId, timeZoneName:'short'})
+        .formatToParts(new Date())
+        .find(p => p.type === 'timeZoneName')?.value || '';
+    } catch { return ''; }
+  }
+
   const KEY    = 'vegas26';
   const TZ_KEY = 'vegas26_tz';
 
   // ── State ────────────────────────────────────────────────────────
-  let activeDate  = DAYS[0].date;
-  let filters     = new Set();
-  let selCat      = 'meeting';
-  let editingId   = null;
-  let weatherData = null;
-  let activeTz    = localStorage.getItem(TZ_KEY) || 'America/Los_Angeles';
+  let activeDate   = DAYS[0].date;
+  let filters      = new Set();
+  let selCat       = 'meeting';
+  let editingId    = null;
+  let weatherData  = null;
+  let activeTz     = localStorage.getItem(TZ_KEY) || DEFAULT_TZ;
+  let cachedEvents = [];   // in-memory cache, synced from Firebase or localStorage
 
-  // ── Storage (flat array, migrates old format) ────────────────────
-  function load() {
+  // ── Firebase setup ───────────────────────────────────────────────
+  let dbRef = null;
+  const firebaseReady = FIREBASE_CONFIG.databaseURL && FIREBASE_CONFIG.databaseURL.startsWith('https://');
+
+  if (firebaseReady) {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    dbRef = firebase.database().ref('vegas2026/events');
+
+    // Real-time listener — updates UI whenever any device saves
+    dbRef.on('value', snapshot => {
+      const val = snapshot.val();
+      cachedEvents = Array.isArray(val) ? val : (val ? Object.values(val) : []);
+      localStorage.setItem(KEY, JSON.stringify(cachedEvents));
+      render();
+    });
+
+    // Connection state indicator
+    firebase.database().ref('.info/connected').on('value', snap => {
+      const badge = document.getElementById('syncBadge');
+      if (snap.val()) {
+        badge.textContent = '🟢 동기화';
+        badge.className   = 'sync-badge ok';
+      } else {
+        badge.textContent = '🔴 오프라인';
+        badge.className   = 'sync-badge off';
+      }
+    });
+  } else {
+    // No Firebase — load from localStorage
     try {
       const raw = localStorage.getItem(KEY);
-      if (!raw) return [];
-      const p = JSON.parse(raw);
-      if (Array.isArray(p)) return p;
-      // Migrate old {date:[events]} format
-      return Object.entries(p).flatMap(([date, evs]) =>
-        evs.map(ev => ({
-          ...ev,
-          startDate: ev.startDate || date,
-          endDate:   ev.endDate   || date,
-          startTime: ev.startTime || ev.start || '',
-          endTime:   ev.endTime   || ev.end   || '',
-        }))
-      );
-    } catch { return []; }
+      const p   = raw ? JSON.parse(raw) : [];
+      cachedEvents = Array.isArray(p) ? p : migrateOldFormat(p);
+    } catch { cachedEvents = []; }
+    document.getElementById('syncBadge').textContent = '';
   }
 
-  function save(events) { localStorage.setItem(KEY, JSON.stringify(events)); }
+  // Migrate old {date:[events]} format to flat array
+  function migrateOldFormat(obj) {
+    return Object.entries(obj).flatMap(([date, evs]) =>
+      evs.map(ev => ({
+        ...ev,
+        startDate: ev.startDate || date,
+        endDate:   ev.endDate   || date,
+        startTime: ev.startTime || ev.start || '',
+        endTime:   ev.endTime   || ev.end   || '',
+        startTz:   ev.startTz   || DEFAULT_TZ,
+        endTz:     ev.endTz     || DEFAULT_TZ,
+      }))
+    );
+  }
 
-  // Events visible on a given date (includes multi-day spans)
+  // ── Storage ──────────────────────────────────────────────────────
+  function getEvents() { return cachedEvents; }
+
+  function saveAll(events) {
+    cachedEvents = events;
+    localStorage.setItem(KEY, JSON.stringify(events));
+    if (dbRef) {
+      dbRef.set(events).catch(e => console.warn('Firebase write failed:', e));
+    }
+  }
+
   function eventsOn(date) {
-    return load()
+    return getEvents()
       .filter(ev => {
         const s = ev.startDate;
         const e = ev.endDate || ev.startDate;
@@ -530,8 +614,7 @@
 
   // ── Timezone clock ───────────────────────────────────────────────
   function updateClock() {
-    const now = new Date();
-    const t   = now.toLocaleTimeString('ko-KR', {
+    const t  = new Date().toLocaleTimeString('ko-KR', {
       timeZone: activeTz, hour:'2-digit', minute:'2-digit', hour12: false,
     });
     const tz = TZ_LIST.find(x => x.id === activeTz);
@@ -544,13 +627,6 @@
     activeTz  = TZ_LIST[(idx + 1) % TZ_LIST.length].id;
     localStorage.setItem(TZ_KEY, activeTz);
     updateClock();
-    syncTzOpts();
-  }
-
-  function syncTzOpts() {
-    document.querySelectorAll('.tz-opt').forEach(btn => {
-      btn.classList.toggle('sel', btn.dataset.tz === activeTz);
-    });
   }
 
   // ── Render ───────────────────────────────────────────────────────
@@ -580,12 +656,12 @@
       <span class="w-icon">${info.e}</span>
       <span class="w-cond">${info.l}</span>
       <span class="w-sep">·</span>
-      <span class="w-temp">최저 ${w.min}° / 최고 ${w.max}°</span>
+      <span>최저 ${w.min}° / 최고 ${w.max}°</span>
       <span class="w-loc">📍 Las Vegas, NV</span>`;
   }
 
   function renderStats() {
-    const all    = load();
+    const all    = getEvents();
     const counts = {meeting:0, dining:0, transport:0, leisure:0};
     all.forEach(ev => { if (ev.cat in counts) counts[ev.cat]++; });
     document.getElementById('totalCount').textContent = all.length;
@@ -613,15 +689,20 @@
     }
 
     el.innerHTML = shown.map(ev => {
-      const isMulti = ev.endDate && ev.endDate !== ev.startDate;
-      const fmt = d => d ? d.slice(5).replace('-','/') : '';
-      const multiTag = isMulti
+      const isMulti   = ev.endDate && ev.endDate !== ev.startDate;
+      const stz       = ev.startTz || DEFAULT_TZ;
+      const etz       = ev.endTz   || DEFAULT_TZ;
+      const diffTz    = ev.startTime && ev.endTime && stz !== etz;
+      const sAbbr     = diffTz ? `<span class="ev-tz">${tzAbbr(stz)}</span>` : '';
+      const eAbbr     = diffTz ? `<span class="ev-tz"> ${tzAbbr(etz)}</span>` : '';
+      const fmt       = d => d ? d.slice(5).replace('-','/') : '';
+      const multiTag  = isMulti
         ? `<div class="ev-multiday">🗓 ${fmt(ev.startDate)} ~ ${fmt(ev.endDate)}</div>`
         : '';
       return `<div class="event-card ${ev.cat}" onclick="openSheet('${ev.id}')">
         <div class="ev-time">
-          <div class="ev-start">${ev.startTime || '--:--'}</div>
-          ${ev.endTime ? `<div class="ev-end">${ev.endTime}</div>` : ''}
+          <div class="ev-start">${ev.startTime || '--:--'} ${sAbbr}</div>
+          ${ev.endTime ? `<div class="ev-end">${ev.endTime}${eAbbr}</div>` : ''}
         </div>
         <div class="ev-dot-col"><div class="ev-dot"></div></div>
         <div class="ev-body">
@@ -652,14 +733,16 @@
     populateDateSelects();
 
     if (id) {
-      const ev = load().find(e => e.id === id);
+      const ev = getEvents().find(e => e.id === id);
       if (!ev) return;
       document.getElementById('sheetTitle').textContent   = '일정 수정';
       document.getElementById('iStartDate').value = ev.startDate || activeDate;
       document.getElementById('iEndDate').value   = ev.endDate   || ev.startDate || activeDate;
       document.getElementById('iTitle').value     = ev.title     || '';
       document.getElementById('iStart').value     = ev.startTime || '';
+      document.getElementById('iStartTz').value   = ev.startTz   || DEFAULT_TZ;
       document.getElementById('iEnd').value       = ev.endTime   || '';
+      document.getElementById('iEndTz').value     = ev.endTz     || DEFAULT_TZ;
       document.getElementById('iPlace').value     = ev.place     || '';
       document.getElementById('iMemo').value      = ev.memo      || '';
       document.getElementById('btnDel').style.display = 'block';
@@ -668,6 +751,8 @@
       document.getElementById('sheetTitle').textContent   = '일정 추가';
       document.getElementById('iStartDate').value = activeDate;
       document.getElementById('iEndDate').value   = activeDate;
+      document.getElementById('iStartTz').value   = activeTz;
+      document.getElementById('iEndTz').value     = activeTz;
       ['iTitle','iStart','iEnd','iPlace','iMemo'].forEach(i =>
         document.getElementById(i).value = ''
       );
@@ -676,7 +761,6 @@
       pickCat('meeting');
     }
 
-    syncTzOpts();
     document.getElementById('overlay').classList.add('open');
   }
 
@@ -708,13 +792,6 @@
     });
   }
 
-  function pickTz(tz) {
-    activeTz = tz;
-    localStorage.setItem(TZ_KEY, tz);
-    updateClock();
-    syncTzOpts();
-  }
-
   // ── CRUD ─────────────────────────────────────────────────────────
   function saveEvent() {
     const title   = document.getElementById('iTitle').value.trim();
@@ -733,26 +810,28 @@
       startDate,
       endDate,
       startTime: document.getElementById('iStart').value,
+      startTz:   document.getElementById('iStartTz').value,
       endTime:   document.getElementById('iEnd').value,
+      endTz:     document.getElementById('iEndTz').value,
       place:     document.getElementById('iPlace').value.trim(),
       memo:      document.getElementById('iMemo').value.trim(),
     };
 
-    let events = load();
+    let events = getEvents().slice();
     if (editingId) events = events.filter(e => e.id !== editingId);
     events.push(ev);
-    save(events);
+    saveAll(events);
 
     closeSheet();
     activeDate = startDate;
-    render();
+    if (!firebaseReady) render();  // Firebase listener handles render when connected
   }
 
   function deleteEvent() {
     if (!editingId || !confirm('이 일정을 삭제할까요?')) return;
-    save(load().filter(e => e.id !== editingId));
+    saveAll(getEvents().filter(e => e.id !== editingId));
     closeSheet();
-    render();
+    if (!firebaseReady) render();
   }
 
   // ── Utils ─────────────────────────────────────────────────────────
