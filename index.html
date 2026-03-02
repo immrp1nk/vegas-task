@@ -403,7 +403,8 @@
         <div class="two-col">
           <div>
             <span class="sub-label">시작</span>
-            <input class="fi" type="time" id="iStart" step="300">
+            <input class="fi" type="time" id="iStart" step="300"
+                   onchange="snapTime('iStart'); onStartTimeChange()">
             <select class="fi tz-sel" id="iStartTz">
               <option value="America/Los_Angeles">🌴 Vegas (PST)</option>
               <option value="Asia/Seoul">🏠 서울 (KST)</option>
@@ -411,7 +412,8 @@
           </div>
           <div>
             <span class="sub-label">종료</span>
-            <input class="fi" type="time" id="iEnd" step="300">
+            <input class="fi" type="time" id="iEnd"   step="300"
+                   onchange="snapTime('iEnd')">
             <select class="fi tz-sel" id="iEndTz">
               <option value="America/Los_Angeles">🌴 Vegas (PST)</option>
               <option value="Asia/Seoul">🏠 서울 (KST)</option>
@@ -569,6 +571,43 @@
   // ── Storage ──────────────────────────────────────────────────────
   function getEvents() { return cachedEvents; }
 
+  // tzId의 UTC 오프셋(분) 반환 — KST +540, PST -480
+  function getOffsetMinutes(tzId, date) {
+    const d     = new Date(`${date}T12:00:00Z`);
+    const local = new Date(d.toLocaleString('en-US', {timeZone: tzId}));
+    const utc   = new Date(d.toLocaleString('en-US', {timeZone: 'UTC'}));
+    return (local - utc) / 60000;
+  }
+
+  // 이벤트 시작 시간을 UTC 분(숫자)으로 반환 → 정렬 키
+  function toUTCMinutes(ev, date) {
+    if (!ev.startTime) return Infinity;
+    const [h, m] = ev.startTime.split(':').map(Number);
+    const offset = getOffsetMinutes(ev.startTz || DEFAULT_TZ, date);
+    return (h * 60 + m) - offset;
+  }
+
+  // 입력값을 가장 가까운 5분 단위로 스냅
+  function snapTime(id) {
+    const el = document.getElementById(id);
+    if (!el.value) return;
+    const [h, m]  = el.value.split(':').map(Number);
+    const snapped = Math.round(m / 5) * 5;
+    const finalM  = snapped % 60;
+    const finalH  = (h + Math.floor(snapped / 60)) % 24;
+    el.value = `${String(finalH).padStart(2,'0')}:${String(finalM).padStart(2,'0')}`;
+  }
+
+  // 시작 시간 변경 시 종료 시간이 비어있으면 +30분 자동 채우기
+  function onStartTimeChange() {
+    const endEl = document.getElementById('iEnd');
+    if (endEl.value) return;
+    const [h, m] = document.getElementById('iStart').value.split(':').map(Number);
+    const totalM = h * 60 + m + 30;
+    endEl.value  = `${String(Math.floor(totalM / 60) % 24).padStart(2,'0')}:${String(totalM % 60).padStart(2,'0')}`;
+    document.getElementById('iEndTz').value = document.getElementById('iStartTz').value;
+  }
+
   function saveAll(events) {
     cachedEvents = events;
     localStorage.setItem(KEY, JSON.stringify(events));
@@ -584,7 +623,7 @@
         const e = ev.endDate || ev.startDate;
         return s <= date && date <= e;
       })
-      .sort((a,b) => (a.startTime||'').localeCompare(b.startTime||''));
+      .sort((a,b) => toUTCMinutes(a, date) - toUTCMinutes(b, date));
   }
 
   // ── Weather ──────────────────────────────────────────────────────
