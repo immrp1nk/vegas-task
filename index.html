@@ -672,7 +672,15 @@
       if (parsed.length > 0) {
         cachedEvents = parsed;
         localStorage.setItem(KEY, JSON.stringify(cachedEvents));
+      } else {
+        // Firebase 비어있음 — localStorage 덮어쓰지 않고 기존 데이터 유지
+        try {
+          const raw = localStorage.getItem(KEY);
+          const p = raw ? JSON.parse(raw) : [];
+          cachedEvents = Array.isArray(p) ? p : migrateOldFormat(p);
+        } catch { cachedEvents = []; }
       }
+      firebaseLoaded = true;
       render();
     });
 
@@ -683,12 +691,19 @@
       if (val) {
         cachedContacts = Array.isArray(val) ? val : Object.values(val);
         localStorage.setItem(CONTACT_KEY, JSON.stringify(cachedContacts));
+      } else {
+        // Firebase 비어있음 — localStorage 덮어쓰지 않고 기존 데이터 유지
+        try {
+          const raw = localStorage.getItem(CONTACT_KEY);
+          cachedContacts = raw ? JSON.parse(raw) : DEFAULT_CONTACTS.slice();
+        } catch { cachedContacts = DEFAULT_CONTACTS.slice(); }
       }
       if (activeView === 'contacts') renderContacts();
     });
 
     // Connection state indicator + 오프라인→온라인 복구 시 localStorage → Firebase 동기화
     let connectionEstablished = false;
+    let firebaseLoaded = false; // Firebase 초기 데이터 수신 완료 여부
 
     firebase.database().ref('.info/connected').on('value', snap => {
       const badge = document.getElementById('syncBadge');
@@ -696,8 +711,8 @@
         badge.textContent = '🟢 동기화';
         badge.className   = 'sync-badge ok';
 
-        if (connectionEstablished) {
-          // 재연결: 오프라인 중 localStorage에 쌓인 변경분을 Firebase에 반영
+        if (connectionEstablished && firebaseLoaded) {
+          // 재연결: Firebase 초기 로드 완료 후 오프라인 변경분만 반영
           dbRef.set(cachedEvents).catch(e => console.warn('sync failed:', e));
           dbContactsRef.set(cachedContacts).catch(e => console.warn('sync failed:', e));
         }
