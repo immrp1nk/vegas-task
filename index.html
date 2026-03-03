@@ -531,6 +531,14 @@
 </div>
 
 <script>
+  // ── Service Worker 등록 ──────────────────────────────────────────
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/vegas-task/sw.js', { scope: '/vegas-task/' })
+        .catch(err => console.warn('SW 등록 실패:', err));
+    });
+  }
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // ★ Firebase 설정 — console.firebase.google.com 에서 복사해 붙여넣기
   //   프로젝트 설정 > 일반 > 내 앱 > firebaseConfig
@@ -648,12 +656,21 @@
       if (activeView === 'contacts') renderContacts();
     });
 
-    // Connection state indicator
+    // Connection state indicator + 오프라인→온라인 복구 시 localStorage → Firebase 동기화
+    let connectionEstablished = false;
+
     firebase.database().ref('.info/connected').on('value', snap => {
       const badge = document.getElementById('syncBadge');
       if (snap.val()) {
         badge.textContent = '🟢 동기화';
         badge.className   = 'sync-badge ok';
+
+        if (connectionEstablished) {
+          // 재연결: 오프라인 중 localStorage에 쌓인 변경분을 Firebase에 반영
+          dbRef.set(cachedEvents).catch(e => console.warn('sync failed:', e));
+          dbContactsRef.set(cachedContacts).catch(e => console.warn('sync failed:', e));
+        }
+        connectionEstablished = true;
       } else {
         badge.textContent = '🔴 오프라인';
         badge.className   = 'sync-badge off';
