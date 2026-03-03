@@ -24,6 +24,8 @@
       --transport-bg: #ECFDF5;
       --leisure:      #8B5CF6;
       --leisure-bg:   #F5F3FF;
+      --etc:          #64748B;
+      --etc-bg:       #F1F5F9;
       --bg:           #F1F5F9;
       --card:         #FFFFFF;
       --text:         #1E293B;
@@ -156,6 +158,7 @@
     .chip.dining    { background: var(--dining-bg);    color: var(--dining); }
     .chip.transport { background: var(--transport-bg); color: var(--transport); }
     .chip.leisure   { background: var(--leisure-bg);   color: var(--leisure); }
+    .chip.etc       { background: var(--etc-bg);       color: var(--etc); }
     .chip.on  { border-color: currentColor; }
     .chip.dim { opacity: 0.35; }
 
@@ -180,6 +183,7 @@
     .event-card.dining    { border-left-color: var(--dining); }
     .event-card.transport { border-left-color: var(--transport); }
     .event-card.leisure   { border-left-color: var(--leisure); }
+    .event-card.etc       { border-left-color: var(--etc); }
 
     .ev-time { flex-shrink: 0; width: 58px; text-align: right; padding-top: 2px; }
     .ev-start { font-size: 13px; font-weight: 700; }
@@ -193,6 +197,7 @@
     .dining    .ev-dot { background: var(--dining); }
     .transport .ev-dot { background: var(--transport); }
     .leisure   .ev-dot { background: var(--leisure); }
+    .etc       .ev-dot { background: var(--etc); }
 
     .ev-body  { flex: 1; min-width: 0; }
     .ev-badge { font-size: 11px; font-weight: 700; margin-bottom: 3px; }
@@ -200,6 +205,7 @@
     .dining    .ev-badge { color: var(--dining); }
     .transport .ev-badge { color: var(--transport); }
     .leisure   .ev-badge { color: var(--leisure); }
+    .etc       .ev-badge { color: var(--etc); }
 
     .ev-title {
       font-size: 15px; font-weight: 700;
@@ -301,6 +307,8 @@
     .cat-btn.sel.dining    { background: var(--dining-bg);    border-color: var(--dining);    color: var(--dining); }
     .cat-btn.sel.transport { background: var(--transport-bg); border-color: var(--transport); color: var(--transport); }
     .cat-btn.sel.leisure   { background: var(--leisure-bg);   border-color: var(--leisure);   color: var(--leisure); }
+    .cat-btn.sel.etc       { background: var(--etc-bg);       border-color: var(--etc);       color: var(--etc); }
+    .cat-btn.etc           { grid-column: span 2; }
 
     /* Action buttons */
     .btn-save {
@@ -444,6 +452,7 @@
           <button class="cat-btn dining"    onclick="pickCat('dining')">🍽️ 식사/네트워킹</button>
           <button class="cat-btn transport" onclick="pickCat('transport')">✈️ 이동/교통</button>
           <button class="cat-btn leisure"   onclick="pickCat('leisure')">🎰 여가</button>
+          <button class="cat-btn etc"       onclick="pickCat('etc')">📝 기타</button>
         </div>
       </div>
 
@@ -583,6 +592,7 @@
     dining:    {icon:'🍽️', label:'식사/네트워킹'},
     transport: {icon:'✈️', label:'이동/교통'},
     leisure:   {icon:'🎰', label:'여가'},
+    etc:       {icon:'📝', label:'기타'},
   };
 
   const TZ_LIST = [
@@ -882,7 +892,7 @@
 
   function renderStats() {
     const all    = getEvents();
-    const counts = {meeting:0, dining:0, transport:0, leisure:0};
+    const counts = {meeting:0, dining:0, transport:0, leisure:0, etc:0};
     all.forEach(ev => { if (ev.cat in counts) counts[ev.cat]++; });
     document.getElementById('totalCount').textContent = all.length;
     document.getElementById('statsChips').innerHTML = Object.entries(CATS).map(([k,c]) => {
