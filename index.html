@@ -349,6 +349,7 @@
       display: flex; align-items: center; gap: 13px;
       border-left: 4px solid #1E3A5F;
       position: relative; z-index: 1; will-change: transform;
+      cursor: pointer;
     }
     .contact-avatar {
       width: 42px; height: 42px; border-radius: 21px;
@@ -1098,7 +1099,6 @@
             <div class="contact-phone"><a href="tel:${esc(c.phone)}">📞 ${esc(c.phone)}</a></div>
             ${c.note ? `<div class="contact-note">${esc(c.note)}</div>` : ''}
           </div>
-          <button class="contact-edit" onclick="openContactSheet('${c.id}')">✎</button>
         </div>
       </div>
     `).join('');
@@ -1213,7 +1213,7 @@
     return true;
   }
 
-  function _swipeEndAt(cx) {
+  function _swipeEndAt(cx, skipTap) {
     const s = _swipeActive;
     _swipeActive = null;
     const dx = cx - s.startX;
@@ -1235,7 +1235,7 @@
         _swipeOpenWrapper = s.wrapper;
       } else {
         s.card.style.transform = 'translateX(0)';
-        if (!s.moved && s.onTap) s.onTap(); // 탭 → 기존 동작
+        if (!s.moved && !skipTap && s.onTap) s.onTap(); // 탭 → 기존 동작
       }
     }
   }
@@ -1252,7 +1252,7 @@
       const id     = wrapper.dataset.id;
       const type   = wrapper.dataset.type;
 
-      const onTap = type === 'event' ? () => openSheet(id) : null;
+      const onTap = type === 'event' ? () => openSheet(id) : () => openContactSheet(id);
       const onDelete = type === 'event'
         ? () => { saveAll(getEvents().filter(e => e.id !== id)); render(); }
         : () => { saveAllContacts(cachedContacts.filter(c => c.id !== id)); renderContacts(); };
@@ -1275,9 +1275,12 @@
       }, { passive: false });
       card.addEventListener('touchend', e => {
         if (!_swipeActive || _swipeActive.wrapper !== wrapper) return;
-        _swipeEndAt(e.changedTouches[0].clientX);
+        _swipeEndAt(e.changedTouches[0].clientX, !!e.target.closest('.contact-phone'));
       });
-      card.addEventListener('mousedown', e => startAt(e.clientX, e.clientY));
+      card.addEventListener('mousedown', e => {
+        if (e.target.closest('.contact-phone')) return; // 전화번호 클릭 시 스와이프 미시작
+        startAt(e.clientX, e.clientY);
+      });
     });
   }
 
