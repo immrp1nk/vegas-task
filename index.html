@@ -169,14 +169,13 @@
 
     .event-card {
       background: var(--card); border-radius: 16px;
-      margin-bottom: 10px; padding: 14px 15px;
+      padding: 14px 15px;
       display: flex; gap: 12px; cursor: pointer;
       border-left: 4px solid transparent;
-      box-shadow: 0 1px 5px rgba(0,0,0,0.07);
-      transition: transform 0.1s, box-shadow 0.1s;
+      position: relative; z-index: 1; will-change: transform;
       -webkit-user-select: none;
     }
-    .event-card:active { transform: scale(0.975); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .event-card:active { opacity: 0.8; }
     .event-card.meeting   { border-left-color: var(--meeting); }
     .event-card.dining    { border-left-color: var(--dining); }
     .event-card.transport { border-left-color: var(--transport); }
@@ -346,10 +345,10 @@
 
     .contact-card {
       background: var(--card); border-radius: 16px;
-      margin-bottom: 10px; padding: 14px 15px;
+      padding: 14px 15px;
       display: flex; align-items: center; gap: 13px;
-      box-shadow: 0 1px 5px rgba(0,0,0,0.07);
       border-left: 4px solid #1E3A5F;
+      position: relative; z-index: 1; will-change: transform;
     }
     .contact-avatar {
       width: 42px; height: 42px; border-radius: 21px;
@@ -372,6 +371,19 @@
       border-radius: 8px; transition: color 0.15s;
     }
     .contact-edit:active { color: #1E3A5F; }
+
+    /* ── Swipe-to-delete ─────────────────────────────────────────── */
+    .swipe-wrapper {
+      position: relative; overflow: hidden; border-radius: 16px;
+      margin-bottom: 10px; box-shadow: 0 1px 5px rgba(0,0,0,0.07);
+      -webkit-user-select: none; user-select: none;
+    }
+    .swipe-delete {
+      position: absolute; right: 0; top: 0; bottom: 0; width: 80px;
+      background: #EF4444; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; cursor: pointer; border: none;
+    }
   </style>
 </head>
 <body>
@@ -624,6 +636,8 @@
   let activeTz         = localStorage.getItem(TZ_KEY) || DEFAULT_TZ;
   let cachedEvents     = [];   // in-memory cache, synced from Firebase or localStorage
   let cachedContacts   = [];
+  let _swipeActive     = null; // 현재 드래그 중인 카드 상태
+  let _swipeOpenWrapper = null; // 삭제 버튼이 열려 있는 wrapper
 
   // ── Firebase setup ───────────────────────────────────────────────
   let dbRef = null;
@@ -637,8 +651,11 @@
     // Real-time listener — updates UI whenever any device saves
     dbRef.on('value', snapshot => {
       const val = snapshot.val();
-      cachedEvents = Array.isArray(val) ? val : (val ? Object.values(val) : []);
-      localStorage.setItem(KEY, JSON.stringify(cachedEvents));
+      const parsed = Array.isArray(val) ? val : (val ? Object.values(val) : []);
+      if (parsed.length > 0) {
+        cachedEvents = parsed;
+        localStorage.setItem(KEY, JSON.stringify(cachedEvents));
+      }
       render();
     });
 
@@ -648,11 +665,8 @@
       const val = snapshot.val();
       if (val) {
         cachedContacts = Array.isArray(val) ? val : Object.values(val);
-      } else {
-        cachedContacts = DEFAULT_CONTACTS.slice();
-        dbContactsRef.set(cachedContacts);
+        localStorage.setItem(CONTACT_KEY, JSON.stringify(cachedContacts));
       }
-      localStorage.setItem(CONTACT_KEY, JSON.stringify(cachedContacts));
       if (activeView === 'contacts') renderContacts();
     });
 
@@ -894,21 +908,25 @@
       const multiTag  = isMulti
         ? `<div class="ev-multiday">🗓 ${fmt(ev.startDate)} ~ ${fmt(ev.endDate)}</div>`
         : '';
-      return `<div class="event-card ${ev.cat}" onclick="openSheet('${ev.id}')">
-        <div class="ev-time">
-          <div class="ev-start">${dispStart || '--:--'} ${abbrLabel}</div>
-          ${dispEnd ? `<div class="ev-end">${dispEnd} ${abbrLabel}</div>` : ''}
-        </div>
-        <div class="ev-dot-col"><div class="ev-dot"></div></div>
-        <div class="ev-body">
-          <div class="ev-badge">${CATS[ev.cat].icon} ${CATS[ev.cat].label}</div>
-          <div class="ev-title">${esc(ev.title)}</div>
-          ${ev.place ? `<div class="ev-place">📍 ${esc(ev.place)}</div>` : ''}
-          ${ev.memo  ? `<div class="ev-memo">${esc(ev.memo)}</div>` : ''}
-          ${multiTag}
+      return `<div class="swipe-wrapper" data-id="${ev.id}" data-type="event">
+        <div class="swipe-delete">삭제</div>
+        <div class="event-card ${ev.cat}">
+          <div class="ev-time">
+            <div class="ev-start">${dispStart || '--:--'} ${abbrLabel}</div>
+            ${dispEnd ? `<div class="ev-end">${dispEnd} ${abbrLabel}</div>` : ''}
+          </div>
+          <div class="ev-dot-col"><div class="ev-dot"></div></div>
+          <div class="ev-body">
+            <div class="ev-badge">${CATS[ev.cat].icon} ${CATS[ev.cat].label}</div>
+            <div class="ev-title">${esc(ev.title)}</div>
+            ${ev.place ? `<div class="ev-place">📍 ${esc(ev.place)}</div>` : ''}
+            ${ev.memo  ? `<div class="ev-memo">${esc(ev.memo)}</div>` : ''}
+            ${multiTag}
+          </div>
         </div>
       </div>`;
     }).join('');
+    initSwipes();
   }
 
   // ── Interactions ─────────────────────────────────────────────────
@@ -1060,17 +1078,21 @@
       return;
     }
     el.innerHTML = cachedContacts.map(c => `
-      <div class="contact-card">
-        <div class="contact-avatar">👤</div>
-        <div class="contact-info">
-          <div class="contact-name">${esc(c.name)}</div>
-          ${c.org  ? `<div class="contact-org">${esc(c.org)}</div>` : ''}
-          <div class="contact-phone"><a href="tel:${esc(c.phone)}">📞 ${esc(c.phone)}</a></div>
-          ${c.note ? `<div class="contact-note">${esc(c.note)}</div>` : ''}
+      <div class="swipe-wrapper" data-id="${c.id}" data-type="contact">
+        <div class="swipe-delete">삭제</div>
+        <div class="contact-card">
+          <div class="contact-avatar">👤</div>
+          <div class="contact-info">
+            <div class="contact-name">${esc(c.name)}</div>
+            ${c.org  ? `<div class="contact-org">${esc(c.org)}</div>` : ''}
+            <div class="contact-phone"><a href="tel:${esc(c.phone)}">📞 ${esc(c.phone)}</a></div>
+            ${c.note ? `<div class="contact-note">${esc(c.note)}</div>` : ''}
+          </div>
+          <button class="contact-edit" onclick="openContactSheet('${c.id}')">✎</button>
         </div>
-        <button class="contact-edit" onclick="openContactSheet('${c.id}')">✎</button>
       </div>
     `).join('');
+    initSwipes();
   }
 
   // ── Contact Sheet ─────────────────────────────────────────────────
@@ -1138,6 +1160,115 @@
     return String(s)
       .replace(/&/g,'&amp;').replace(/</g,'&lt;')
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Swipe-to-delete ──────────────────────────────────────────────
+  const DEL_W = 80; // 삭제 버튼 너비(px)
+
+  function _closeOpenSwipe() {
+    if (!_swipeOpenWrapper) return;
+    const card = _swipeOpenWrapper.querySelector('.event-card, .contact-card');
+    card.style.transition = 'transform 0.25s ease';
+    card.style.transform  = 'translateX(0)';
+    _swipeOpenWrapper._swOpen = false;
+    _swipeOpenWrapper = null;
+  }
+
+  // 전역 마우스 핸들러 (데스크탑 드래그 지원)
+  document.addEventListener('mousemove', e => {
+    if (!_swipeActive) return;
+    _swipeMoveAt(e.clientX, e.clientY);
+  });
+  document.addEventListener('mouseup', e => {
+    if (!_swipeActive) return;
+    _swipeEndAt(e.clientX);
+  });
+  // 카드 바깥 탭 → 열린 삭제 버튼 닫기
+  document.addEventListener('click', e => {
+    if (_swipeOpenWrapper && !_swipeOpenWrapper.contains(e.target)) _closeOpenSwipe();
+  });
+
+  function _swipeMoveAt(cx, cy) {
+    const s = _swipeActive;
+    const dx = cx - s.startX, dy = cy - s.startY;
+    if (!s.horizSwipe) {
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return false;
+      if (Math.abs(dx) >= Math.abs(dy)) s.horizSwipe = true;
+      else { _swipeActive = null; return false; }
+    }
+    s.moved = true;
+    const base = s.initOpen ? -DEL_W : 0;
+    const nx   = Math.max(-DEL_W, Math.min(0, base + dx));
+    s.card.style.transform = `translateX(${nx}px)`;
+    return true;
+  }
+
+  function _swipeEndAt(cx) {
+    const s = _swipeActive;
+    _swipeActive = null;
+    const dx = cx - s.startX;
+    s.card.style.transition = 'transform 0.25s ease';
+    if (s.initOpen) {
+      // 열려 있던 카드: 오른쪽 스와이프 or 탭 → 닫기
+      if (dx > 20 || !s.moved) {
+        s.card.style.transform = 'translateX(0)';
+        s.wrapper._swOpen = false;
+        if (_swipeOpenWrapper === s.wrapper) _swipeOpenWrapper = null;
+      } else {
+        s.card.style.transform = `translateX(${-DEL_W}px)`;
+      }
+    } else {
+      if (dx < -30) {
+        // 왼쪽 스와이프 → 삭제 버튼 열기
+        s.card.style.transform = `translateX(${-DEL_W}px)`;
+        s.wrapper._swOpen = true;
+        _swipeOpenWrapper = s.wrapper;
+      } else {
+        s.card.style.transform = 'translateX(0)';
+        if (!s.moved && s.onTap) s.onTap(); // 탭 → 기존 동작
+      }
+    }
+  }
+
+  function initSwipes() {
+    _swipeActive = null;
+    document.querySelectorAll('.swipe-wrapper').forEach(wrapper => {
+      if (wrapper._swipeInited) return; // 중복 초기화 방지
+      wrapper._swipeInited = true;
+      wrapper._swOpen      = false;
+
+      const card   = wrapper.querySelector('.event-card, .contact-card');
+      const delBtn = wrapper.querySelector('.swipe-delete');
+      const id     = wrapper.dataset.id;
+      const type   = wrapper.dataset.type;
+
+      const onTap = type === 'event' ? () => openSheet(id) : null;
+      const onDelete = type === 'event'
+        ? () => { saveAll(getEvents().filter(e => e.id !== id)); render(); }
+        : () => { saveAllContacts(cachedContacts.filter(c => c.id !== id)); renderContacts(); };
+
+      delBtn.addEventListener('click', e => { e.stopPropagation(); onDelete(); });
+
+      function startAt(cx, cy) {
+        if (_swipeOpenWrapper && _swipeOpenWrapper !== wrapper) _closeOpenSwipe();
+        _swipeActive = {
+          card, wrapper, startX: cx, startY: cy,
+          initOpen: wrapper._swOpen, horizSwipe: false, moved: false, onTap
+        };
+        card.style.transition = 'none';
+      }
+
+      card.addEventListener('touchstart', e => startAt(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+      card.addEventListener('touchmove', e => {
+        if (!_swipeActive || _swipeActive.wrapper !== wrapper) return;
+        if (_swipeMoveAt(e.touches[0].clientX, e.touches[0].clientY)) e.preventDefault();
+      }, { passive: false });
+      card.addEventListener('touchend', e => {
+        if (!_swipeActive || _swipeActive.wrapper !== wrapper) return;
+        _swipeEndAt(e.changedTouches[0].clientX);
+      });
+      card.addEventListener('mousedown', e => startAt(e.clientX, e.clientY));
+    });
   }
 
   // ── Init ──────────────────────────────────────────────────────────
