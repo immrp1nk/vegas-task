@@ -626,7 +626,13 @@
   ];
 
   // ── State ────────────────────────────────────────────────────────
-  let activeDate       = DAYS[0].date;
+  const _todayLocal = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  })();
+  let activeDate = _todayLocal < DAYS[0].date          ? DAYS[0].date
+                 : _todayLocal > DAYS[DAYS.length-1].date ? DAYS[DAYS.length-1].date
+                 : _todayLocal;
   let activeView       = 'schedule';
   let filters          = new Set();
   let selCat           = 'meeting';
@@ -853,6 +859,10 @@
         <span class="dw">${we}</span>
       </div>`;
     }).join('');
+    requestAnimationFrame(() => {
+      const activeTab = document.querySelector('#dayTabs .day-tab.active');
+      if (activeTab) activeTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    });
   }
 
   function renderWeather() {
